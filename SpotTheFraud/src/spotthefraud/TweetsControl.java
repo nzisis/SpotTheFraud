@@ -96,19 +96,21 @@ public class TweetsControl {
                                  //Edw elegxoume gia t kainouria trends ama uparxoun idi mesa stn lista mas
                                  //Ama uparxoun au3anoume to finish time tous
                                  if(top.getActivity() && trends.getTrends()[i].getName().equals(top.getName()) ){
+                                     
+                                     DBObject query=new BasicDBObject("Finish Time", top.getFinishTime());
                                      top.increaseFinishTime();
                                      exists=true;
                                      DBCursor cursor=coll.find();
                                      while(cursor.hasNext()){
                                                
+                                       
                                        DBObject updObject=cursor.next();
                                        String name=updObject.get("Name").toString();
                                        if(top.getName().equals(name)){
                                            updObject.put("Finish Time",top.getFinishTime());
-                                           
+                                           coll.update(query, updObject);
+                                         
                                        }
-                                         
-                                         
                                      }
                                      
                                      
@@ -131,6 +133,14 @@ public class TweetsControl {
                          }
                         
                      }
+                      System.out.println("----------");
+                     for(int i=0; i<allTopics.size(); i++){
+                        
+                         System.out.println("Name="+allTopics.get(i).getName()+" Arrival Time="+allTopics.get(i).getArrivalTime()
+                         +" Finish Time="+allTopics.get(i).getFinishTime());
+                     }
+                        System.out.println("################");
+                     
                      time+=1;//Edv metrame 5leta
                      start=false;
                  } catch (TwitterException ex) {
@@ -138,14 +148,14 @@ public class TweetsControl {
                  }
              }
          };
-         final ScheduledFuture<?> gatheringHandler=scheduler.scheduleAtFixedRate(gathering, 0, 5, TimeUnit.MINUTES);
+         final ScheduledFuture<?> gatheringHandler=scheduler.scheduleAtFixedRate(gathering, 0, 6, TimeUnit.MINUTES);
          scheduler.schedule(new Runnable() {
 
             @Override
             public void run() {
               gatheringHandler.cancel(true);
             }
-        }, 3, TimeUnit.DAYS);
+        }, 10, TimeUnit.MINUTES);
      }
      
      

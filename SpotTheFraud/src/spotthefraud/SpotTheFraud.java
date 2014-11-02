@@ -36,7 +36,7 @@ public class SpotTheFraud {
             Twitter twitter=new TwitterFactory(cb.build()).getInstance();
             
            TweetsControl a=new TweetsControl(twitter);
-           
+           a.GatherTopTweets();
             
             
             
