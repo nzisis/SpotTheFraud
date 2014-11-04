@@ -27,16 +27,10 @@ public class SpotTheFraud {
      */
     public static void main(String[] args) {
           //The first thing we’ll do in our new file is to store the credentials
-            ConfigurationBuilder cb=new ConfigurationBuilder();
-            cb.setOAuthConsumerKey("0cc8fkRgUfzX5fYK14m211vhE");
-            cb.setOAuthConsumerSecret("45d3sLIiEG0suWxEGBECTWP0tXJL6hJQwqqNCvo04eeGKjL8Al");
-            cb.setOAuthAccessToken("43403340-aUeWfSgfYpYSDmoeVzaPXF1aaiBAo3IL7zgIXwahU");
-            cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
+          
             
-            Twitter twitter=new TwitterFactory(cb.build()).getInstance();
-            
-           TweetsControl a=new TweetsControl(twitter);
-           a.GatherTopTweets();
+           TweetsControl a=new TweetsControl();
+         //  a.GatherTopTweets();
             
             
             
