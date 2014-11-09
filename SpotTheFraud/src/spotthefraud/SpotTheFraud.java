@@ -5,16 +5,7 @@
  */
 package spotthefraud;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import twitter4j.Query;
-import twitter4j.Trends;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
-import twitter4j.conf.ConfigurationBuilder;
+
 
 /**
  *
@@ -30,41 +21,7 @@ public class SpotTheFraud {
           
             
           TweetsControl a=new TweetsControl();
-         //  a.GatherTopTweets();
-    
-       /*
-            
-            Thread t1=new Thread(new Runnable() {
-
-               @Override
-               public void run() {
-                   try {
-                       System.out.println("thread 1 running");
-                       Thread.sleep(2000);
-                   } catch (InterruptedException ex) {
-                       Logger.getLogger(SpotTheFraud.class.getName()).log(Level.SEVERE, null, ex);
-                   }
-               }
-           });
-            
-         Thread t2=new Thread(new Runnable() {
-
-               @Override
-               public void run() {
-                   try {
-                       System.out.println("thread 2 running");
-                       Thread.sleep(100);
-                   } catch (InterruptedException ex) {
-                       Logger.getLogger(SpotTheFraud.class.getName()).log(Level.SEVERE, null, ex);
-                   }
-               }
-           });
-
-    
-         
-            t1.start();
-            t2.start();
-               */
+       
         
     }
     
