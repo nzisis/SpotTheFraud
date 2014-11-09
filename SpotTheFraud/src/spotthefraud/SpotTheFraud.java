@@ -29,12 +29,42 @@ public class SpotTheFraud {
           //The first thing we’ll do in our new file is to store the credentials
           
             
-           TweetsControl a=new TweetsControl();
+          TweetsControl a=new TweetsControl();
          //  a.GatherTopTweets();
+    
+       /*
             
+            Thread t1=new Thread(new Runnable() {
+
+               @Override
+               public void run() {
+                   try {
+                       System.out.println("thread 1 running");
+                       Thread.sleep(2000);
+                   } catch (InterruptedException ex) {
+                       Logger.getLogger(SpotTheFraud.class.getName()).log(Level.SEVERE, null, ex);
+                   }
+               }
+           });
             
-            
+         Thread t2=new Thread(new Runnable() {
+
+               @Override
+               public void run() {
+                   try {
+                       System.out.println("thread 2 running");
+                       Thread.sleep(100);
+                   } catch (InterruptedException ex) {
+                       Logger.getLogger(SpotTheFraud.class.getName()).log(Level.SEVERE, null, ex);
+                   }
+               }
+           });
+
+    
          
+            t1.start();
+            t2.start();
+               */
         
     }
     

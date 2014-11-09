@@ -48,9 +48,9 @@ public class TopTrendingTopic {
         return name;
     }
     
-    public void increaseFinishTime(){
-      
-      this.FinishTime+=1;  
+    public void increaseFinishTime(int newValue){
+      this.finish_time=newValue+1;
+      //this.FinishTime+=1;  
     }
     
     public boolean getActivity(){
