@@ -17,9 +17,7 @@ public class SpotTheFraud {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-          //The first thing we’ll do in our new file is to store the credentials
-          
-            
+       
           TweetsControl a=new TweetsControl();
        
         

@@ -6,18 +6,26 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;
+import java.lang.Thread.State;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import twitter4j.FilterQuery;
 import twitter4j.Query;
 import twitter4j.QueryResult;
+import twitter4j.StallWarning;
 import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
 import twitter4j.Trends;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.TwitterStream;
+import twitter4j.TwitterStreamFactory;
+import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.json.DataObjectFactory;
 
@@ -27,7 +35,7 @@ import twitter4j.json.DataObjectFactory;
  */
 public class TweetsControl {
     
-     private  Twitter twitter;
+     private Twitter twitter;
     // variables for handling nosql database Mongo
      private MongoClient client;
      private DB db,TweetDb;
@@ -44,6 +52,10 @@ public class TweetsControl {
      private boolean exists; //identifies if a trend already exists in allTopics
      private int time; //this is our variable to measure time. It is measured in # of 5-minutes-window. 
      
+     private TwitterStream stream;
+     private StatusListener listener;
+     private final Object lock;
+     
      public TweetsControl(){
         
         // The configuration details of our application as developer mode of Twitter API
@@ -53,9 +65,59 @@ public class TweetsControl {
         cb.setOAuthAccessToken("43403340-aUeWfSgfYpYSDmoeVzaPXF1aaiBAo3IL7zgIXwahU");
         cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
         cb.setJSONStoreEnabled(true); //We use this as we pull json files from Twitter Streaming API
+        
+        Configuration config=cb.build();
             
+        lock=new Object();
+        
         //We use Twitter4J library to connect to Twitter API
-        twitter=new TwitterFactory(cb.build()).getInstance();
+        twitter=new TwitterFactory(config).getInstance();
+        
+        stream=new TwitterStreamFactory(config).getInstance();
+        
+        listener=new StatusListener() {
+
+            @Override
+            public void onStatus(Status status) {
+                      
+                
+                      String json=DataObjectFactory.getRawJSON(status);
+                      DBObject jsonObj=(DBObject) JSON.parse(json);
+                      tweetColl.insert(jsonObj);
+                      if(topTopicThread.getState()!=State.TIMED_WAITING){
+                          System.out.println("Stop gathering status");
+                          synchronized(lock){
+                              lock.notify();
+                          }
+                      }
+            }
+
+            @Override
+            public void onDeletionNotice(StatusDeletionNotice sdn) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onTrackLimitationNotice(int i) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onScrubGeo(long l, long l1) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onStallWarning(StallWarning sw) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onException(Exception excptn) {
+               
+            }
+        };
+        
         //the arraylist of the TopTrendingTopics objects. 
         allTopics=new ArrayList<>();
         start=true; 
@@ -78,6 +140,8 @@ public class TweetsControl {
 
                 //while volatile variable is false we continue to execute this runnable
                 while(!stopRequested){
+                    System.out.println("Find the top trends");
+                   
                  try {
                          //we get the top10 topic trends using getPlaceTrends(int scope) and we use value '1' for global scope
                          Trends trends=twitter.getPlaceTrends(1);
@@ -149,6 +213,7 @@ public class TweetsControl {
 
                          time+=1;//Every time that we gather trends Topics we increate the time by 1 that is translated in 5 minutes real time
                          start=false;
+                         
 
                      } catch (TwitterException ex) {
 
@@ -162,7 +227,7 @@ public class TweetsControl {
 
               //We suspend the execution of topTopicThread for 5 min because we can obtain new data from REST API only after 5 min have passed.
                 try {
-                    Thread.sleep(300000);
+                    Thread.sleep(100000);
                 } catch (InterruptedException ex) {
                     System.out.println("Process Finished");
                 }
@@ -175,6 +240,55 @@ public class TweetsControl {
 
         @Override
         public void run() {
+            
+            while(!stopRequested){
+             try {
+                    //When this Runnable starts to run we need to check if the CountDownLatch object is countDowned from the  Thread
+                    //topTopicThread so the execution can start.This is achieved by method CountDownLatch.await().
+                 System.out.println("Wait for Rest Api to take the top trends");
+                    cdl.await();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
+                }
+               System.out.println("Process Started");
+             
+             FilterQuery fq=new FilterQuery();
+             ArrayList<String> currentTopTrends=new ArrayList<>();
+              System.out.println("Dn prepei n perasei apo edw");
+             for(TopTrendingTopic topic:allTopics){
+                 
+                 if(topic.getFinishTime()+24>=time){
+                     currentTopTrends.add(topic.getName());
+                 }
+                
+             }
+             
+             String keywords[]=new String[currentTopTrends.size()];
+             currentTopTrends.toArray(keywords);
+             fq.track(keywords);
+             
+             stream.addListener(listener);
+             stream.filter(fq);
+             
+             try{
+                 synchronized(lock){
+                     lock.wait();
+                 }
+             }catch(InterruptedException e){
+                  e.printStackTrace();
+             }
+                System.out.println("Gathering statuses stopped");
+                
+                stream.cleanUp();
+                stream.shutdown();
+                   
+                
+            }
+           
+            
+            
+            
+          /*
             
            //while volatile variable is false we continue to execute this runnable
             while(!stopRequested){
@@ -257,8 +371,9 @@ public class TweetsControl {
                     Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
                 }
                }           
+        }*/
         }
-        }
+            
     };
     
 }
