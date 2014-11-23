@@ -5,9 +5,9 @@ package spotthefraud;
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
 public class FollowedUser {
-    int userID;
+    private int userID; //the unique ID number of each user in Twitter
     //Hashmap<Trend, Integer> //posa tweets exei kanei se kathe trend -an xreiastei
-    int totalNumberOfTweets;
+    private int totalNumberOfTweets; //each user's total number of Tweets in our database
     
     public FollowedUser(){
         userID =0;

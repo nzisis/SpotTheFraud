@@ -10,6 +10,9 @@ import com.mongodb.MongoClient;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,18 +26,30 @@ import twitter4j.JSONObject;
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
 public class TweetsAnalyzer {
-    private ArrayList<FollowedUser> statistics;
-    private ArrayList<FollowedUser> group1;
-    private ArrayList<FollowedUser> group2;
-    private ArrayList<FollowedUser> group3;
-    private ArrayList<FollowedUser> group4;
-    private ArrayList<FollowedUser> usersCollection; //final collection of users that will be followed
+    private HashMap<Integer, Integer> statistics; //contains (userID, totalTweets) for all our database
+    //The 4 differnt groups that our users will be classified in.
+    private HashMap<Integer, Integer> group1;
+    private HashMap<Integer, Integer> group2;
+    private HashMap<Integer, Integer> group3;
+    private HashMap<Integer, Integer> group4;
+    private HashMap<Integer, Integer> usersCollection; //final collection of users that will be followed
     private MongoClient client;
     private DB TweetDb;
     private DBCollection tweetColl;
 
+    /**
+     * Constructor.
+     * Initializes Mongo, calculates the frequency of tweets for each user
+     * and then classifies them into 4 groups. Finally we select randomly 10
+     * users from each group and we store them in usersCollection.
+     * @throws JSONException 
+     */
     public TweetsAnalyzer() throws JSONException {
-        statistics = null;
+        statistics = new HashMap<>();
+        group1 = new HashMap<>();
+        group2 = new HashMap<>();
+        group3 = new HashMap<>();
+        group4 = new HashMap<>();
         initializeMongo();
         calculateFrequency();
         classificationOfUsers();        
@@ -70,20 +85,10 @@ public class TweetsAnalyzer {
             // and so on
             int id = firstTweet.getInt("id");
             
-            boolean found = false; //used to determine if the author of the tweet exists already or not
-
-            int pos =0;
-            for(FollowedUser temp:statistics){
-                
-                if(id == temp.getUserID()){
-                    statistics.get(pos).increaseNumberOfTweets();
-                    found = true;
-                }
-                pos++;
-            }
-            
-            if (found == false){
-                statistics.add(new FollowedUser(id,0));
+            if(statistics.containsKey(id)){
+                statistics.put(id, statistics.get(id)+1);
+            }else{
+                statistics.put(id, 1);
             }
 	}
     }
@@ -93,9 +98,9 @@ public class TweetsAnalyzer {
      */
     @SuppressWarnings("empty-statement")
     private void classificationOfUsers(){
-        int[] numbers;
-        int[] firstHalf;
-        int[] secondHalf;
+        int[] numbers; //stores all tweets frequencies from the users.
+        int[] firstHalf; //the first half of the numbers array
+        int[] secondHalf; //the second half of the numbers array
         int counter, q1, q2, q3, size = statistics.size(), halfsize;
         
         numbers = new int[size];
@@ -106,12 +111,13 @@ public class TweetsAnalyzer {
             halfsize = size/2 +1;
         }
                 
+        // pass all the users' tweets frequencies to the numbers array
         counter=0;
-        for(FollowedUser temp: statistics){
-            numbers[counter++] = temp.totalNumberOfTweets;          
+        for (Map.Entry entry : statistics.entrySet()) {
+            numbers[counter++] = (int) entry.getValue();
         }
-        
-        Arrays.sort(numbers);
+       
+        Arrays.sort(numbers); // sorts the array of Numbers that contains the frequencies
         
         q2 = findMedian(numbers);
         
@@ -121,15 +127,15 @@ public class TweetsAnalyzer {
         q1 = findMedian(firstHalf);
         q3 = findMedian(secondHalf);             
        
-        for(FollowedUser temp: statistics){
-            if (temp.totalNumberOfTweets <q1){
-                group1.add(temp);
-            }else if (temp.totalNumberOfTweets < q2){
-                group2.add(temp);
-            }else if (temp.totalNumberOfTweets < q3){
-                group3.add(temp);
+        for (Map.Entry entry : statistics.entrySet()) {
+            if ((int) entry.getValue() < q1){
+                group1.put((Integer) entry.getKey(), (Integer) entry.getValue());
+            }else if ((int) entry.getValue() < q2){
+                group2.put((Integer) entry.getKey(), (Integer) entry.getValue());
+            }else if ((int) entry.getValue() < q3){
+                group3.put((Integer) entry.getKey(), (Integer) entry.getValue());
             }else{
-                group4.add(temp);
+                group4.put((Integer) entry.getKey(), (Integer) entry.getValue());
             }
         }
         
@@ -140,10 +146,13 @@ public class TweetsAnalyzer {
         getRandomUsersFromGroup(group4);
     }
     
-    private void getRandomUsersFromGroup(ArrayList<FollowedUser> group){
+    private void getRandomUsersFromGroup(HashMap<Integer,Integer> group){
         Random random= new Random();
+        Object[] values = group.values().toArray();
+        Object randomValue;
         for(int i=0; i<10;i++) {
-            usersCollection.add(group.remove(random.nextInt(group.size()-1)));
+            randomValue = values[random.nextInt(values.length)];
+            //put in userCollections the random values!!!!!!
         }
     }
     
@@ -155,3 +164,42 @@ public class TweetsAnalyzer {
         }
     }
 }
+
+
+//differnt way to use statistics
+/*
+boolean found = false; //used to determine if the author of the tweet exists already or not
+
+int pos =0;
+for(FollowedUser temp:statistics){
+
+    if(id == temp.getUserID()){
+        statistics.get(pos).increaseNumberOfTweets();
+        found = true;
+    }
+    pos++;
+}
+
+if (found == false){
+    statistics.add(new FollowedUser(id,1));
+} */
+
+/*
+        for(FollowedUser temp: statistics){
+            numbers[counter++] = temp.getTotalNumberOfTweets();          
+        }
+*/
+
+/*
+for(FollowedUser temp: statistics){
+            if (temp.getTotalNumberOfTweets() <q1){
+                group1.add(temp);
+            }else if (temp.getTotalNumberOfTweets() < q2){
+                group2.add(temp);
+            }else if (temp.getTotalNumberOfTweets() < q3){
+                group3.add(temp);
+            }else{
+                group4.add(temp);
+            }
+        }
+*/
