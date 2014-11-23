@@ -22,7 +22,7 @@ import twitter4j.JSONObject;
 
 
 /**
- *
+ *TODO debugging and implement the crawler of tweets for 40 users
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
 public class TweetsAnalyzer {
@@ -33,6 +33,7 @@ public class TweetsAnalyzer {
     private ArrayList<FollowedUser> group3;
     private ArrayList<FollowedUser> group4;
     private ArrayList<FollowedUser> usersCollection; //final collection of users that will be followed
+    private HashMap<Long,Integer> uniqueIds;
     private MongoClient client;
     private DB TweetDb;
     private DBCollection tweetColl;
@@ -44,12 +45,13 @@ public class TweetsAnalyzer {
      * users from each group and we store them in usersCollection.
      * @throws JSONException 
      */
-    public TweetsAnalyzer() throws JSONException {
+    public TweetsAnalyzer()  {
         statistics = new ArrayList<>();
         group1 = new ArrayList<>();
         group2 = new ArrayList<>();
         group3 = new ArrayList<>();
         group4 = new ArrayList<>();
+        uniqueIds=new HashMap<>();
         initializeMongo();
         calculateFrequency();
         classificationOfUsers();        
@@ -71,29 +73,29 @@ public class TweetsAnalyzer {
             }
     }
     
-    private void calculateFrequency() throws JSONException{
+    private void calculateFrequency() {
         
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
-        
+          int pos =0;
 	while (cursor.hasNext()) { //for each tweet in the collection
             //we have to calculate the number of tweets at each trending topic...
-            int id = (int) cursor.next().get("id");
-                       
-            boolean found = false; //used to determine if the author of the tweet exists already or not
-
-            int pos =0;
-            for(FollowedUser temp:statistics){
-
-                if(id == temp.getUserID()){
-                    statistics.get(pos).increaseNumberOfTweets();
-                    found = true;
-                }
-                pos++;
+            //DBObject obj = cursor.next();
+           // int id = obj.get("id");  cursor.next().get("id");
+            long id = Long.parseLong(cursor.next().get("id").toString()) ;
+            
+           // System.out.println("-"+id);           
+            
+            if(uniqueIds.containsKey(id)){
+                statistics.get(uniqueIds.get(id)).increaseNumberOfTweets();
+               // System.out.println(statistics.get(uniqueIds.get(id)).getTotalNumberOfTweets());
+            }else{
+                   uniqueIds.put(id, pos);
+                   pos++;
+                   statistics.add(new FollowedUser(id,1));
             }
-
-            if (found == false){
-                statistics.add(new FollowedUser(id,1));
-            } 
+            
+            
+           
 	}
     }
     
@@ -152,6 +154,7 @@ public class TweetsAnalyzer {
     
     private void getRandomUsersFromGroup(ArrayList<FollowedUser> group){
         Random random = new Random();
+        //TODO fix this method 
         for(int i=0; i<10; i++){
             usersCollection.add(group.remove(random.nextInt(group.size())));
         }

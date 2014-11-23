@@ -18,8 +18,8 @@ public class SpotTheFraud {
      */
     public static void main(String[] args) {
        
-          TweetsControl a=new TweetsControl();
-       
+          //TweetsControl a=new TweetsControl();
+       TweetsAnalyzer analyzer=new TweetsAnalyzer();
         
     }
     

@@ -8,6 +8,7 @@ public class FollowedUser {
     private int userID; //the unique ID number of each user in Twitter
     //Hashmap<Trend, Integer> //posa tweets exei kanei se kathe trend -an xreiastei
     private int totalNumberOfTweets; //each user's total number of Tweets in our database
+    private double id;
     
     public FollowedUser(){
         userID =0;
@@ -16,6 +17,11 @@ public class FollowedUser {
     
     public FollowedUser(int userID, int totalNumberOfTweets){
         this.userID  = userID;
+        this.totalNumberOfTweets = totalNumberOfTweets;
+    }
+    
+    public FollowedUser(double userID, int totalNumberOfTweets){
+        id  = userID;
         this.totalNumberOfTweets = totalNumberOfTweets;
     }
     
