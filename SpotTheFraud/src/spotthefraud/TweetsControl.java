@@ -9,12 +9,10 @@ import com.mongodb.util.JSON;
 import java.lang.Thread.State;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import twitter4j.ConnectionLifeCycleListener;
 import twitter4j.FilterQuery;
-import twitter4j.Query;
-import twitter4j.QueryResult;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
@@ -42,10 +40,10 @@ public class TweetsControl {
      private DBCollection coll,tweetColl;
      
     //variables for  parallel running Threads
-     private Thread topTopicThread,trendingTweetsThread;
-     private Runnable topTopicRunnable,trendintTweetRunnabe;
+     private Thread topTopicThread;
+     private Runnable topTopicRunnable;
      private volatile boolean stopRequested=false;//volatile variables are global for all Threads
-     private CountDownLatch cdl;//We use CountDownLatch to handle the running of Threads
+    
      
      private ArrayList<TopTrendingTopic> allTopics;
      private boolean start; //distinguises the very first iteration of topics to allTopics arraylist. That happens because at the next iterations we use another method.
@@ -55,7 +53,10 @@ public class TweetsControl {
      private TwitterStream stream;
      private StatusListener listener;
      private final Object lock;
+     private final Configuration config;
+     private FilterQuery fq;
      
+ 
      public TweetsControl(){
         
         // The configuration details of our application as developer mode of Twitter API
@@ -66,14 +67,15 @@ public class TweetsControl {
         cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
         cb.setJSONStoreEnabled(true); //We use this as we pull json files from Twitter Streaming API
         
-        Configuration config=cb.build();
+        config=cb.build();
             
         lock=new Object();
         
         //We use Twitter4J library to connect to Twitter API
         twitter=new TwitterFactory(config).getInstance();
         
-        stream=new TwitterStreamFactory(config).getInstance();
+        
+      
         
         listener=new StatusListener() {
 
@@ -87,9 +89,21 @@ public class TweetsControl {
                       if(topTopicThread.getState()!=State.TIMED_WAITING){
                           System.out.println("Stop gathering status");
                           synchronized(lock){
-                              lock.notify();
+                              try {
+                                  lock.wait();
+                              } catch (InterruptedException ex) {
+                                  Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
+                              }
+                          }
+                          if(stream!=null){
+                              stopStreaming();
+                          }
+                          System.out.println("Start again the filtering process");
+                          if(!stopRequested){
+                          startFiltering(listener, fq);
                           }
                       }
+                      
             }
 
             @Override
@@ -219,163 +233,45 @@ public class TweetsControl {
 
                          Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
                      }
-
-              cdl.countDown();//We want to run 2 Threads concurrently with a standard order of execution of Threads.
-              //We use the object CountDownLatch to prevent the trendingTweetsThread from running before the topTopicThread which gathers the
-              //trend Topics.So we use the method countDown to tell that we finished the execution of topTopicThread. After this 2 senarios can
-              //happen:a)first start trendingTweetsThread and then interrupt topTopicThread b)first interrupt topTopicThread and then start trendingTweetsThread
-
-              //We suspend the execution of topTopicThread for 5 min because we can obtain new data from REST API only after 5 min have passed.
-                try {
-                    Thread.sleep(100000);
-                } catch (InterruptedException ex) {
-                    System.out.println("Process Finished");
-                }
-            } 
-        }
-    };
-    
-    //the execution of Runnable that collects tweets from the current Top Topics: allTopics
-    trendintTweetRunnabe=new Runnable() {
-
-        @Override
-        public void run() {
-            
-            while(!stopRequested){
-             try {
-                    //When this Runnable starts to run we need to check if the CountDownLatch object is countDowned from the  Thread
-                    //topTopicThread so the execution can start.This is achieved by method CountDownLatch.await().
-                 System.out.println("Wait for Rest Api to take the top trends");
-                    cdl.await();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
-                }
-               System.out.println("Process Started");
-             
-             FilterQuery fq=new FilterQuery();
-             ArrayList<String> currentTopTrends=new ArrayList<>();
-              System.out.println("Dn prepei n perasei apo edw");
-             for(TopTrendingTopic topic:allTopics){
+                 
+                 
+               ArrayList<String> currentTopTrends=new ArrayList<>();
+                for(TopTrendingTopic topic:allTopics){
                  
                  if(topic.getFinishTime()+24>=time){
                      currentTopTrends.add(topic.getName());
                  }
                 
              }
-             
-             String keywords[]=new String[currentTopTrends.size()];
-             currentTopTrends.toArray(keywords);
-             fq.track(keywords);
-             
-             stream.addListener(listener);
-             stream.filter(fq);
-             
-             try{
+              fq=new FilterQuery();
+              String keywords[]=new String[currentTopTrends.size()];
+              currentTopTrends.toArray(keywords);
+              fq.track(keywords);
+              
+                 
                  synchronized(lock){
-                     lock.wait();
+                     lock.notify();
                  }
-             }catch(InterruptedException e){
-                  e.printStackTrace();
-             }
-                System.out.println("Gathering statuses stopped");
-                
-                stream.cleanUp();
-                stream.shutdown();
-                   
-                
-            }
-           
-            
-            
-            
-          /*
-            
-           //while volatile variable is false we continue to execute this runnable
-            while(!stopRequested){
-            
-                try {
-                    //When this Runnable starts to run we need to check if the CountDownLatch object is countDowned from the  Thread
-                    //topTopicThread so the execution can start.This is achieved by method CountDownLatch.await().
-                    
-                    cdl.await();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                
-            //Check if trends top topics exist in the list :allTopics    
-            if(allTopics==null){
-                System.out.println("No topics are initialized");
-            }
-            
-           ArrayList<Integer> positions=new ArrayList<>(); //ArrayList to keep track of the positions of topics that are not active anymore. 
-           int pos=0;//position of current Topic in arraylist:allTopics
-           
-            for(TopTrendingTopic top:allTopics){
-              
+             
+              //We suspend the execution of topTopicThread for 5 min because we can obtain new data from REST API only after 5 min have passed.
                
-                //For each topic we check its finish time, if it is > from the current time it means that is active.
-                if(top.getFinishTime()+24>=time){
-                    
-                    //We create a query to filter the tweets from Streaming Api based on our top trends Topics. So we take for each active
-                    //Top Trending Topic its name and we pass it to constructor of Query Object.
-                    Query query=new Query(top.getName());
-                    //Then we search the Streaming Api with this query and we save the results in QueryResult object result.
-                    try {
-                        QueryResult result=twitter.search(query);
-                        //For every tweet that we gathered we take its json form and we save it in String variable json. To do that we use
-                        //the DataObjectFactory.getRawJSON(tweet) method that returns the json of tweet in String format.Then we parse the json
-                        //to a DbObject and we insert it to MongoDB Collection: tweetColl
-              
-                         for(Status tweet:result.getTweets()){
-                              String json=DataObjectFactory.getRawJSON(tweet);
-                              DBObject jsonObj=(DBObject) JSON.parse(json);
-                              tweetColl.insert(jsonObj);
-                                      
-                             System.out.println(json+"**************");
-                         }
-                    } catch (TwitterException ex) {
-                        Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                //Else 2 hours(24 5-minutes-windows) have passed from the finish time of the trend Topic so its not active anymore.
-                //So we add to ArrayList: positions the position of this trend Topic.
-                else{
-                
-                    positions.add(pos);
-                }
-                pos++;
-            }
-            
-            //After we have collected all the tweets from active trend Topics we remove from ArrayList:
-            //allTopics all the trend Topics that are not active anymore.
-            for(int i=0; i<positions.size(); i++){
-                int correctRemove=positions.get(i)-i;
-                String name=allTopics.get(correctRemove).getName();
-                allTopics.remove(correctRemove);
-                System.out.println(name);
-            }
-            //If time is 864 it means that 3 days have passed so we need to stop the procedure.
-               if(time==3){
+                   if(time==3){
                    //We change the value of volatile boolean variable stopRequested to true. Then the trendingTweetsRunnable proceeds to the
                    //next iteration but stopRequested is now true so it cannot enter while loop.As a result the Thread is being terminated.
                    //Also we have woken up the topTopicThread and it cannot enter while loop so it terminates as well.
                    stopRequested=true;
-                   topTopicThread.interrupt();
-               }
-               //Else we stop the this Thread for 5 minutes.
-               else{
-            
-                try {
+                  
+               }else{
+                 try {
                     Thread.sleep(300000);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
+                    System.out.println("Process Finished");
                 }
-               }           
-        }*/
+                   }
+            } 
         }
-            
     };
-    
+   
 }
 /**
  * We initialize the attributes of MongoDb.First we create a MongoClient object. Then we take topTopics Database and we create two
@@ -398,16 +294,73 @@ public class TweetsControl {
 /**
  * We initialize our Threads and also the CountDownLatch object and after that we start the procedure.
  */
-    private void initializeThreadsAndStartProcedure(){
+    public void initializeThreadsAndStartProcedure(){
 
          topTopicThread=new Thread(topTopicRunnable);
-         trendingTweetsThread=new Thread(trendintTweetRunnabe);
-
-         cdl=new CountDownLatch(1);
-
+       
          topTopicThread.start();
-         trendingTweetsThread.start();
+         synchronized(lock){
+            try {
+                lock.wait();
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+                System.out.println("Interrupted");
+            }
+        }
+         startFiltering(listener, fq);
+         System.out.println("Start Filtering");
+         
     }
+    
+    
+    private void startFiltering(StatusListener listener,FilterQuery query){
+     
+        stream=new TwitterStreamFactory(config).getInstance();
+        
+        stream.addListener(listener);
+        stream.filter(query);
+        
+    }
+    
+    private void stopStreaming(){
+        
+        if(stream==null){
+            return;
+        }
+        stream.addConnectionLifeCycleListener(new ConnectionLifeCycleListener() {
+
+            @Override
+            public void onConnect() {
+                
+            }
+
+            @Override
+            public void onDisconnect() {
+                
+            }
+
+            @Override
+            public void onCleanUp() {
+                stream=null;
+            }
+        });
+        
+        stream.shutdown();
+        
+        while (stream != null) {
+			try {
+			Thread.sleep(100);
+			} catch (InterruptedException e) {
+			}
+		}
+        if(stream==null){
+            System.out.println("Stream Stopped");
+        }
+        
+        
+    }
+    
+    
 
   }
 
