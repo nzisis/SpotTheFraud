@@ -77,14 +77,8 @@ public class TweetsAnalyzer {
         
 	while (cursor.hasNext()) { //for each tweet in the collection
             //we have to calculate the number of tweets at each trending topic...
-            
-            JSONObject root = new JSONObject(cursor.next());
-            JSONArray tweetArray = root.getJSONArray("tweet");
-            // now get the first element:
-            JSONObject firstTweet = tweetArray.getJSONObject(0);
-            // and so on
-            int id = firstTweet.getInt("id");
-           
+            int id = (int) cursor.next().get("id");
+                       
             boolean found = false; //used to determine if the author of the tweet exists already or not
 
             int pos =0;
