@@ -20,6 +20,7 @@ public class SpotTheFraud {
        
           //TweetsControl a=new TweetsControl();
        TweetsAnalyzer analyzer=new TweetsAnalyzer();
+       analyzer.startTrackingUsersTweets();
         
     }
     

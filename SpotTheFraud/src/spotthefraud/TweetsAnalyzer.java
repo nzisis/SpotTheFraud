@@ -7,6 +7,7 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.util.JSON;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,11 +15,23 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Filter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import twitter4j.FilterQuery;
 import twitter4j.JSONArray;
 import twitter4j.JSONException;
 import twitter4j.JSONObject;
+import twitter4j.StallWarning;
+import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
+import twitter4j.TwitterFactory;
+import twitter4j.TwitterStream;
+import twitter4j.TwitterStreamFactory;
+import twitter4j.User;
+import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.json.DataObjectFactory;
 
 
 /**
@@ -33,11 +46,17 @@ public class TweetsAnalyzer {
     private ArrayList<FollowedUser> group3;
     private ArrayList<FollowedUser> group4;
     private ArrayList<FollowedUser> usersCollection; //final collection of users that will be followed
-    private HashMap<Long,Integer> uniqueIds;
+    
+    private HashMap<String,Integer> uniqueIds;
+    
     private MongoClient client;
-    private DB TweetDb;
-    private DBCollection tweetColl;
+    private DB TweetDb,FollowedUsers;
+    private DBCollection tweetColl,followedColl;
 
+    private TwitterStream stream;
+    private StatusListener listener;
+    private FilterQuery fq;
+    private ConfigurationBuilder cb;
     /**
      * Constructor.
      * Initializes Mongo, calculates the frequency of tweets for each user
@@ -52,7 +71,8 @@ public class TweetsAnalyzer {
         group3 = new ArrayList<>();
         group4 = new ArrayList<>();
         uniqueIds=new HashMap<>();
-        initializeMongo();
+        usersCollection=new ArrayList<>();
+        initializeBasicVariables();
         calculateFrequency();
         classificationOfUsers();        
     }
@@ -61,12 +81,23 @@ public class TweetsAnalyzer {
     * We initialize the attributes of MongoDb.First we create a MongoClient object. Then we take topTopics Database and we create two
     *collections for Top Trending Topics and for Tweets from Top Trending Topics
     */
-    private void initializeMongo(){
+    private void initializeBasicVariables(){
+        
+              // The configuration details of our application as developer mode of Twitter API
+        cb=new ConfigurationBuilder();
+        cb.setOAuthConsumerKey("0cc8fkRgUfzX5fYK14m211vhE");
+        cb.setOAuthConsumerSecret("45d3sLIiEG0suWxEGBECTWP0tXJL6hJQwqqNCvo04eeGKjL8Al");
+        cb.setOAuthAccessToken("43403340-aUeWfSgfYpYSDmoeVzaPXF1aaiBAo3IL7zgIXwahU");
+        cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
+        cb.setJSONStoreEnabled(true); //We use this as we pull json files from Twitter Streaming API
         
           try {
              client=new MongoClient("localhost",27017);
              TweetDb=client.getDB("Tweets");
              tweetColl=TweetDb.createCollection("tweetsColl", null);
+             
+             FollowedUsers=client.getDB("Followed");
+             followedColl=FollowedUsers.createCollection("followedColl", null);
              
             }catch (UnknownHostException ex) {
              Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
@@ -79,19 +110,18 @@ public class TweetsAnalyzer {
           int pos =0;
 	while (cursor.hasNext()) { //for each tweet in the collection
             //we have to calculate the number of tweets at each trending topic...
-            //DBObject obj = cursor.next();
-           // int id = obj.get("id");  cursor.next().get("id");
-            long id = Long.parseLong(cursor.next().get("id").toString()) ;
+            String userID=cursor.next().get("id_str").toString();
+           // System.out.println(userID);
             
-           // System.out.println("-"+id);           
+                    
             
-            if(uniqueIds.containsKey(id)){
-                statistics.get(uniqueIds.get(id)).increaseNumberOfTweets();
-               // System.out.println(statistics.get(uniqueIds.get(id)).getTotalNumberOfTweets());
+            if(uniqueIds.containsKey(userID)){
+                statistics.get(uniqueIds.get(userID)).increaseNumberOfTweets();
+                //System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
             }else{
-                   uniqueIds.put(id, pos);
+                   uniqueIds.put(userID, pos);
                    pos++;
-                   statistics.add(new FollowedUser(id,1));
+                   statistics.add(new FollowedUser(userID,1));
             }
             
             
@@ -146,27 +176,108 @@ public class TweetsAnalyzer {
         }
        
         //random selection from each category
-        getRandomUsersFromGroup(group1);
-        getRandomUsersFromGroup(group2);
-        getRandomUsersFromGroup(group3);
-        getRandomUsersFromGroup(group4);
+       // getRandomUsersFromGroup(group1);
+        //getRandomUsersFromGroup(group2);
+        //getRandomUsersFromGroup(group3);
+        //getRandomUsersFromGroup(group4);
+        for(int i=0; i<40; i++){
+            usersCollection.add(statistics.get(i));
+        }
     }
     
     private void getRandomUsersFromGroup(ArrayList<FollowedUser> group){
         Random random = new Random();
         //TODO fix this method 
-        for(int i=0; i<10; i++){
-            usersCollection.add(group.remove(random.nextInt(group.size())));
-        }
+        int size=0;
+            while(size<10){
+                int randomPosition=random.nextInt()%group.size();
+                FollowedUser user=group.get(randomPosition);
+                boolean flag=false;
+                for(FollowedUser fuser:usersCollection){
+                    if(fuser.getUserID().equals(user.getUserID())){
+                        flag=true;
+                        break;
+
+                    }
+                }
+                if(!flag){
+                    usersCollection.add(user);
+                    size++;
+                 }
+            }
+        
     }
     
     private int findMedian(int[] numbers){
         if(numbers.length % 2 == 0){//odd number
             return (numbers[numbers.length/2] + numbers[numbers.length/2 +1])/2;
         }else{ //even number
-            return numbers[(int) statistics.size()/2 +1];
+            return numbers[ numbers.length/2 +1];
         }
     }
+    
+    public void startTrackingUsersTweets(){
+        
+        listener=new StatusListener() {
+
+            @Override
+            public void onStatus(Status status) {
+                 User user=status.getUser();
+                 long id=user.getId();
+                 for(FollowedUser fuser:usersCollection){
+                     if(id==Long.parseLong(fuser.getUserID())){
+                         System.out.println("Coble");
+                     }
+                 }
+                 String json=DataObjectFactory.getRawJSON(status);
+                 System.out.println("json");
+                 DBObject jsonObj=(DBObject) JSON.parse(json);
+                 followedColl.insert(jsonObj);
+                 //TODO if seven days passed stop the process
+            }
+
+            @Override
+            public void onDeletionNotice(StatusDeletionNotice sdn) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onTrackLimitationNotice(int i) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onScrubGeo(long l, long l1) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onStallWarning(StallWarning sw) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onException(Exception excptn) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+        
+        fq=new FilterQuery();
+        long userIDs[]=new long[usersCollection.size()];
+        for(int i=0; i<usersCollection.size(); i++){
+            userIDs[i]=Long.parseLong(usersCollection.get(i).getUserID());
+        }
+        fq.follow(userIDs);
+        
+       
+        stream=new TwitterStreamFactory(cb.build()).getInstance();
+        stream.addListener(listener);
+        stream.filter(fq);
+        
+    }
+    
+    
+    
 }
 
 
