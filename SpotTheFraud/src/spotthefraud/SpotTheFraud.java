@@ -18,9 +18,9 @@ public class SpotTheFraud {
      */
     public static void main(String[] args) {
        
-          //TweetsControl a=new TweetsControl();
-       TweetsAnalyzer analyzer=new TweetsAnalyzer();
-       analyzer.startTrackingUsersTweets();
+       TweetsControl a=new TweetsControl();
+       //TweetsAnalyzer analyzer=new TweetsAnalyzer();
+       //analyzer.startTrackingUsersTweets();
         
     }
     

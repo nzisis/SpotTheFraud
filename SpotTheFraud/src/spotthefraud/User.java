@@ -20,22 +20,23 @@ import java.util.logging.Logger;
  */
 public class User {
     
-    private int followers,followees,userID;
+    private int followers,followees;
+    private String userID;
     private double ratio;//followers/followees
     private String accountAge;
     
     public User(){
-        userID = 0;
+        userID = "";
         followers = 0;
         followees = 0;
     }
-    public User (int userID){
+    public User (String userID){
         this.userID = userID;
         followers = 0;
         followees = 0;
     }
     
-    public User (int userID,int followers,int followees,String accountAge){
+    public User (String userID,int followers,int followees,String accountAge){
         this.userID = userID;
         this.followers = followers;
         this.followees = followees;
@@ -59,11 +60,11 @@ public class User {
         this.followees = followees;
     }
 
-    public int getUserID() {
+    public String getUserID() {
         return userID;
     }
 
-    public void setUserID(int userID) {
+    public void setUserID(String userID) {
         this.userID = userID;
     }
 

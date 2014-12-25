@@ -255,7 +255,7 @@ public class TweetsControl {
              
               //We suspend the execution of topTopicThread for 5 min because we can obtain new data from REST API only after 5 min have passed.
                
-                   if(time==3){
+                   if(time==4){
                    //We change the value of volatile boolean variable stopRequested to true. Then the trendingTweetsRunnable proceeds to the
                    //next iteration but stopRequested is now true so it cannot enter while loop.As a result the Thread is being terminated.
                    //Also we have woken up the topTopicThread and it cannot enter while loop so it terminates as well.
