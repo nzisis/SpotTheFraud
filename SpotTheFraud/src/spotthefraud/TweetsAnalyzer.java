@@ -202,6 +202,10 @@ public class TweetsAnalyzer {
             remainingUsers = remainingUsers - usersCollection.size();
         }
         
+       
+        
+        
+        
         if (group2.size()>=10){ //will get 10 users from group2
             getRandomUsersFromGroup(group2);
             remainingUsers = remainingUsers - 10;
@@ -314,15 +318,20 @@ public class TweetsAnalyzer {
             public void onStatus(Status status) {
                  User user=status.getUser();
                  Long id=user.getId();
+                 boolean flag=false;
                  for(FollowedUser fuser:usersCollection){
                      if(id==Long.parseLong(fuser.getUserID())){
                          System.out.println("Coble");
-                     }
+                         flag=true;
+                         break;
+                         }
                  }
+                 if(flag){
                  String json=DataObjectFactory.getRawJSON(status);
                  System.out.println("json");
                  DBObject jsonObj=(DBObject) JSON.parse(json);
                  followedColl.insert(jsonObj);
+                 }
                  //TODO if seven days passed stop the process
             }
 

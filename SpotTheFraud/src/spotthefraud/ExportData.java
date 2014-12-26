@@ -81,9 +81,13 @@ public class ExportData {
              int pos=0;
              boolean flag=false;
              int tweets=0,user_mentions=0,user_hashtag=0,user_url=0,retweeted=0,reply=0,retweet_count=0;
+             String expanded_url[]=new String[1];
+             String tweet="";
+
           
              String reply_str=obj.get("in_reply_to_status_id_str").toString();
              String retweet_count_str=obj.get("retweet_count").toString();
+             String source=obj.get("source").toString();
              retweet_count=Integer.parseInt(retweet_count_str);
              
             
@@ -100,10 +104,20 @@ public class ExportData {
                  user_mentions=mentionArray.length();
                  user_hashtag=hashtagArray.length();
                  user_url=urlArray.length();
+                 
+                 if(user_url!=0){
+                     expanded_url=new String[user_url];
+                     for(int i=0; i<user_url; i++){
+                     expanded_url[i]=urlArray.getJSONObject(i).getString("expanded_url");
+                     }
+                     
+                 }
                 
                 
                 if(jobj.has("retweeted_status")){
                     retweeted+=1;
+                }else{
+                   tweet=obj.get("text").toString();
                 }
                 
                 if(reply_str!=null){
@@ -130,6 +144,8 @@ public class ExportData {
                  tweet_user.setNOTweets(tweets);
                 if(retweeted!=0){
                  tweet_user.increaseNORetweets();
+                }else{
+                    tweet_user.addAndProcessTweet(tweet);
                 }
                 if(reply!=0){
                     tweet_user.increaseNOReplies();
@@ -138,6 +154,12 @@ public class ExportData {
                 tweet_user.increaseNOHashtags(user_hashtag);
                 tweet_user.increaseNOUrls(user_url);
                 tweet_user.increaseNORReceived(retweet_count);
+                if(user_url!=0){
+                    for(int i=0; i<user_url; i++){
+                     tweet_user.addUniqueURL(expanded_url[i]);
+                    }
+                }
+                tweet_user.increaseSourceCount(source);
                 
                 
              }else{
@@ -145,7 +167,9 @@ public class ExportData {
                  followedUsers.get(pos).setNOTweets(tweets);
                  if(retweeted!=0){
                  followedUsers.get(pos).increaseNORetweets();
-                }
+                }else{
+                     followedUsers.get(pos).addAndProcessTweet(tweet);
+                 }
                 if(reply!=0){
                     followedUsers.get(pos).increaseNOReplies();
                 }
@@ -153,7 +177,12 @@ public class ExportData {
                 followedUsers.get(pos).increaseNOHashtags(user_hashtag);
                 followedUsers.get(pos).increaseNOUrls(user_url);
                 followedUsers.get(pos).increaseNORReceived(retweet_count);
-                
+                 if(user_url!=0){
+                    for(int i=0; i<user_url; i++){
+                    followedUsers.get(pos).addUniqueURL(expanded_url[i]);
+                    }
+                }
+                   followedUsers.get(pos).increaseSourceCount(source);
                  
                  
              }
@@ -170,7 +199,9 @@ public class ExportData {
                user.calculateAvegRetweetPerTweet();
                user.calculatePercentageOfTweetsWithHashtag();
                user.calculatePercentageOfTweetsWithURL();
-               
+               user.calculateURLsRatio();
+               user.calculateMostFrequentSource();
+               user.calculateCopies();
              }
         
         

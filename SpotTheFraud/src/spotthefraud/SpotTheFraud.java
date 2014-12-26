@@ -5,6 +5,8 @@
  */
 package spotthefraud;
 
+import org.shortdistance.LevenshteinDistance;
+
 
 
 /**
@@ -18,9 +20,13 @@ public class SpotTheFraud {
      */
     public static void main(String[] args) {
        
-       TweetsControl a=new TweetsControl();
+       //TweetsControl a=new TweetsControl();
        //TweetsAnalyzer analyzer=new TweetsAnalyzer();
        //analyzer.startTrackingUsersTweets();
+        String s1="Hi Nick",s2="Hi Mick";
+       int dis =LevenshteinDistance.computeDistance(s1,s2);
+      
+        //System.out.println((double)dis/(s1.length()+s2.length()));
         
     }
     
