@@ -82,8 +82,8 @@ public class TweetsAnalyzer {
     *collections for Top Trending Topics and for Tweets from Top Trending Topics
     */
     private void initializeBasicVariables(){
-        
-              // The configuration details of our application as developer mode of Twitter API
+        System.out.println("Initializing basic values...");
+        // The configuration details of our application as developer mode of Twitter API
         cb=new ConfigurationBuilder();
         cb.setOAuthConsumerKey("0cc8fkRgUfzX5fYK14m211vhE");
         cb.setOAuthConsumerSecret("45d3sLIiEG0suWxEGBECTWP0tXJL6hJQwqqNCvo04eeGKjL8Al");
@@ -105,27 +105,25 @@ public class TweetsAnalyzer {
     }
     
     private void calculateFrequency() {
-        
+        System.out.println("start calculating frequency...");
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
           int pos =0;
 	while (cursor.hasNext()) { //for each tweet in the collection
+            //System.out.println("---------------------------------------------------");
             //we have to calculate the number of tweets at each trending topic...
             String userID=cursor.next().get("id_str").toString();
-           // System.out.println(userID);
-            
-                    
+           //System.out.println(userID);
             
             if(uniqueIds.containsKey(userID)){
                 statistics.get(uniqueIds.get(userID)).increaseNumberOfTweets();
-                //System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
+                System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
             }else{
                    uniqueIds.put(userID, pos);
                    pos++;
                    statistics.add(new FollowedUser(userID,1));
+                   //System.out.println("+++ New user added! " + userID);
             }
-            
-            
-           
+            //System.out.println("---------------------------------------------------");
 	}
     }
     
@@ -134,54 +132,87 @@ public class TweetsAnalyzer {
      */
     @SuppressWarnings("empty-statement")
     private void classificationOfUsers(){
+        System.out.println("-------Starting classification of users-------");
         int[] numbers; //stores all tweets frequencies from the users.
         int[] firstHalf; //the first half of the numbers array
         int[] secondHalf; //the second half of the numbers array
+        System.out.println("Statistics array size: " + statistics.size());
         int counter, q1, q2, q3, size = statistics.size(), halfsize;
         
         numbers = new int[size];
-        
+
+        System.out.println("<><><> Spliting sizes in half <><><>");
         if(size % 2 == 0){//----------odd number
             halfsize = size/2;
         }else{//--------------------------------even number
             halfsize = size/2 +1;
         }
-                
+        System.out.println("<><><> halfsize: "+ halfsize + " <><><>");
+
         // pass all the users' tweets frequencies to the numbers array
         counter=0;
         for(FollowedUser temp: statistics){
             numbers[counter++] = temp.getTotalNumberOfTweets();          
         }
-       
+        
+        System.out.println("|||| Sorting... ||||");
         Arrays.sort(numbers); // sorts the array of Numbers that contains the frequencies
+        System.out.println("|||| Sorting finished! ||||");
         
         q2 = findMedian(numbers);
-        
+        System.out.println("**********Middle median (q2): " + q2);
+
         firstHalf = Arrays.copyOfRange(numbers, 0, halfsize);
         secondHalf = Arrays.copyOfRange(numbers, halfsize, size);
         
+        
         q1 = findMedian(firstHalf);
         q3 = findMedian(secondHalf);
+        System.out.println("**********First median (q1): " + q1);
+        System.out.println("**********Third median (q3): " + q3);
+
+
         
         for(FollowedUser temp: statistics){
             if (temp.getTotalNumberOfTweets() <q1){
                 group1.add(temp);
+                System.out.println("!!!!!!!" + temp.getUserID() + "added to GROUP 1");
             }else if (temp.getTotalNumberOfTweets() < q2){
                 group2.add(temp);
+                System.out.println("!!!!!!!" + temp.getUserID() + "added to GROUP 2");
             }else if (temp.getTotalNumberOfTweets() < q3){
                 group3.add(temp);
+                System.out.println("!!!!!!!" + temp.getUserID() + "added to GROUP 3");
             }else{
                 group4.add(temp);
+                System.out.println("!!!!!!!" + temp.getUserID() + "added to GROUP 4");
             }
         }
-       
+        
+        System.out.println("&^&^&^&^= Random Selection from groups =&^&^&^&^&^");
+
         //random selection from each category
-       // getRandomUsersFromGroup(group1);
-        //getRandomUsersFromGroup(group2);
-        //getRandomUsersFromGroup(group3);
-        //getRandomUsersFromGroup(group4);
+        
+        getRandomUsersFromGroup(group1);
+        System.out.println("&^&^&^&^= Random Selection from GROUP 1 complete =&^&^&^&^&^");
+        System.out.println("&^&^&^&^= Group1 size: " + group1.size() + "  =&^&^&^&^&^");
+
+        getRandomUsersFromGroup(group2);
+        System.out.println("&^&^&^&^= Random Selection from GROUP 2 complete =&^&^&^&^&^");
+        System.out.println("&^&^&^&^= Group2 size: " + group2.size() + "  =&^&^&^&^&^");
+        
+        getRandomUsersFromGroup(group3);
+        System.out.println("&^&^&^&^= Random Selection from GROUP 3 complete =&^&^&^&^&^");
+        System.out.println("&^&^&^&^= Group3 size: " + group3.size() + "  =&^&^&^&^&^");
+        
+        getRandomUsersFromGroup(group4);
+        System.out.println("&^&^&^&^= Random Selection from GROUP 4 complete =&^&^&^&^&^");
+        System.out.println("&^&^&^&^= Group4 size: " + group4.size() + "  =&^&^&^&^&^");
+        
+        System.out.println("$$$$$ Starting to print the final users! $$$$$$$$");
         for(int i=0; i<40; i++){
             usersCollection.add(statistics.get(i));
+            System.out.println(statistics.get(i).getUserID() + " " + statistics.get(i).getTotalNumberOfTweets());
         }
     }
     
@@ -190,6 +221,7 @@ public class TweetsAnalyzer {
         //TODO fix this method 
         int size=0;
             while(size<10){
+                System.out.println("(Get random from group) Loop: "+ size);
                 int randomPosition=random.nextInt()%group.size();
                 FollowedUser user=group.get(randomPosition);
                 boolean flag=false;
@@ -197,7 +229,6 @@ public class TweetsAnalyzer {
                     if(fuser.getUserID().equals(user.getUserID())){
                         flag=true;
                         break;
-
                     }
                 }
                 if(!flag){
@@ -205,10 +236,11 @@ public class TweetsAnalyzer {
                     size++;
                  }
             }
-        
     }
     
     private int findMedian(int[] numbers){
+        System.out.println("()()() FindMedian ()()()");
+        System.out.println("group length: "+ numbers.length);
         if(numbers.length % 2 == 0){//odd number
             return (numbers[numbers.length/2] + numbers[numbers.length/2 +1])/2;
         }else{ //even number
@@ -217,13 +249,14 @@ public class TweetsAnalyzer {
     }
     
     public void startTrackingUsersTweets(){
+        //na allaksoume ta Long se String !
         
         listener=new StatusListener() {
 
             @Override
             public void onStatus(Status status) {
                  User user=status.getUser();
-                 long id=user.getId();
+                 Long id=user.getId();
                  for(FollowedUser fuser:usersCollection){
                      if(id==Long.parseLong(fuser.getUserID())){
                          System.out.println("Coble");
@@ -269,15 +302,10 @@ public class TweetsAnalyzer {
         }
         fq.follow(userIDs);
         
-       
         stream=new TwitterStreamFactory(cb.build()).getInstance();
         stream.addListener(listener);
         stream.filter(fq);
-        
     }
-    
-    
-    
 }
 
 
