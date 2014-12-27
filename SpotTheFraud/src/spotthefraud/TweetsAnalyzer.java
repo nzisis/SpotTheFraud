@@ -107,7 +107,7 @@ public class TweetsAnalyzer {
     private void calculateFrequency() {
         System.out.println("start calculating frequency...");
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
-          int pos =0;
+        int pos =0;
 	while (cursor.hasNext()) { //for each tweet in the collection
             //System.out.println("---------------------------------------------------");
             //we have to calculate the number of tweets at each trending topic...
@@ -116,7 +116,7 @@ public class TweetsAnalyzer {
             
             if(uniqueIds.containsKey(userID)){
                 statistics.get(uniqueIds.get(userID)).increaseNumberOfTweets();
-                System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
+                //System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
             }else{
                    uniqueIds.put(userID, pos);
                    pos++;
@@ -189,86 +189,49 @@ public class TweetsAnalyzer {
             }
         }
         
+        //random selection from each frequency-group
         System.out.println("&^&^&^&^= Random Selection from groups =&^&^&^&^&^");
-        //random selection from each category
-        int remainingUsers=40; //counts the remaining users to be selected!
         
-        if (group1.size()>=10){ //will get 10 users from group1
-            getRandomUsersFromGroup(group1);
-            remainingUsers = remainingUsers - 10;
-            System.out.println("&^&^&^&^= Random Selection from GROUP 1 complete =&^&^&^&^&^");
-            System.out.println("&^&^&^&^= Group1 size: " + group1.size() + "  =&^&^&^&^&^");
-        } else { 
-            remainingUsers = remainingUsers - usersCollection.size();
-        }
+        System.out.println("&^&^= Group1 size: " + group1.size() + " =&^&^");
+        getMaxTenRandomUsersFromGroup(group1);
+
+        System.out.println("&^&^= Group2 size: " + group2.size() + " =&^&^");
+        getMaxTenRandomUsersFromGroup(group2);
         
-       
+        System.out.println("&^&^= Group3 size: " + group3.size() + " =&^&^");
+        getMaxTenRandomUsersFromGroup(group3);
+
+        System.out.println("&^&^= Group4 size: " + group4.size() + " =&^&^");
+        getMaxTenRandomUsersFromGroup(group4);
+      
         
-        
-        
-        if (group2.size()>=10){ //will get 10 users from group2
-            getRandomUsersFromGroup(group2);
-            remainingUsers = remainingUsers - 10;
-            System.out.println("&^&^&^&^= Random Selection from GROUP 2 complete =&^&^&^&^&^");
-            System.out.println("&^&^&^&^= Group2 size: " + group2.size() + "  =&^&^&^&^&^");
-        }else {
-            remainingUsers = remainingUsers - usersCollection.size();
-        }
-        
-        if (group3.size()>=10){ //will get 10 users from group3
-            getRandomUsersFromGroup(group3);
-            remainingUsers = remainingUsers - 10;
-            System.out.println("&^&^&^&^= Random Selection from GROUP 3 complete =&^&^&^&^&^");
-            System.out.println("&^&^&^&^= Group3 size: " + group3.size() + "  =&^&^&^&^&^");
-        }else {
-            remainingUsers = remainingUsers - usersCollection.size();
-        }
-        
-        if (group4.size()>=10){ //will get 10 users from group4
-            getRandomUsersFromGroup(group4);
-            remainingUsers = remainingUsers - 10;
-            System.out.println("&^&^&^&^= Random Selection from GROUP 4 complete =&^&^&^&^&^");
-            System.out.println("&^&^&^&^= Group4 size: " + group4.size() + "  =&^&^&^&^&^");
-        }else {
-            remainingUsers = remainingUsers - usersCollection.size();
-        }
-        
-        while(remainingUsers > 0){
+        while(40 - usersCollection.size() > 0){
             System.out.println("Get one random user from whole database");
             getOneRandomUserFromGroup(statistics);   
         }
         
-        System.out.println("$$$$$ Starting to print the final users! $$$$$$$$");
-        for(int i=0; i<40; i++){
-            usersCollection.add(statistics.get(i));
-            System.out.println(statistics.get(i).getUserID() + " " + statistics.get(i).getTotalNumberOfTweets());
+        System.out.println("$$$$$= Starting to print the final users! =$$$$$$$$");
+        for(int i=0; i<usersCollection.size(); i++){
+            System.out.println(i + ". " + usersCollection.get(i).getUserID() + " " + usersCollection.get(i).getTotalNumberOfTweets());
         }
     }
     
     /**
-     * gets random users from a group
+     * gets maximum of 10 random users from a group
      * @param group 
      */
-    private void getRandomUsersFromGroup(ArrayList<FollowedUser> group){
+    private void getMaxTenRandomUsersFromGroup(ArrayList<FollowedUser> group){
         Random random = new Random();
-        //TODO fix this method - debug!!
-        int counter=0;
-            while(counter<10 || group.isEmpty()) {
-                System.out.println("(Get random from group) Loop: "+ counter);
-                int randomPosition=random.nextInt()%group.size();
-                FollowedUser user=group.remove(randomPosition);
-                boolean flag=false;
-                for(FollowedUser fuser:usersCollection){
-                    if(fuser.getUserID().equals(user.getUserID())){
-                        flag=true;
-                        break;
-                    }
-                }
-                if(!flag){
-                    usersCollection.add(user);
-                    counter++;
-                 }
-            }
+        int counter=0; //will count the loop number up to 10
+        while(counter <10 && !group.isEmpty()) {
+
+            System.out.println("(Get random from group) Loop: "+ counter);
+            int randomPosition=random.nextInt()%group.size();
+            FollowedUser user=group.remove(randomPosition); //returns the user and deletes him from group
+
+            usersCollection.add(user); //adds user to the final collection
+            counter++;
+        }
     }
     
     /**
@@ -277,26 +240,26 @@ public class TweetsAnalyzer {
      */
     private void getOneRandomUserFromGroup(ArrayList<FollowedUser> group){
         Random random = new Random();
-        //TODO fix this method - debug!!
-        int counter=0;
-            if(!group.isEmpty()) {
-                System.out.println("(Get random from group) Loop: "+ counter);
-                int randomPosition=random.nextInt()%group.size();
-                FollowedUser user=group.remove(randomPosition);
-                boolean flag=false;
+        
+        if(!group.isEmpty()) {
+            System.out.println("Get one random from database");
+            int randomPosition=random.nextInt()%group.size(); 
+            FollowedUser user=group.remove(randomPosition); //returns the user and deletes him from group
+            
+            boolean flag=false; //used to check if user exists already in final collection
+            do{ //loop until it finds one that doesnt exist in final collection
                 for(FollowedUser fuser:usersCollection){
                     if(fuser.getUserID().equals(user.getUserID())){
                         flag=true;
-                        break;
                     }
                 }
                 if(!flag){
                     usersCollection.add(user);
-                    counter++;
                  }
-            } else{
-                System.out.println("Group is empty");
-            }
+            } while (flag==true);
+        } else {
+            System.out.println("Group is empty");
+        }
     }
     
     private int findMedian(int[] numbers){
