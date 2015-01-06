@@ -23,8 +23,9 @@ public class SpotTheFraud {
        //TweetsControl a=new TweetsControl();
        //TweetsAnalyzer analyzer=new TweetsAnalyzer();
        //analyzer.startTrackingUsersTweets();
-        String s1="Hi Nick",s2="Hi Mick";
-       int dis =LevenshteinDistance.computeDistance(s1,s2);
+      //  String s1="Hi Nick",s2="Hi Mick";
+       //int dis =LevenshteinDistance.computeDistance(s1,s2);
+        ExportData d=new ExportData();
       
         //System.out.println((double)dis/(s1.length()+s2.length()));
         
