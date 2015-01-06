@@ -78,10 +78,11 @@ public class TweetsAnalyzer {
         trends = new HashMap<>();
         uniqueIds=new HashMap<>();
         usersCollection=new ArrayList<>();
+        key = null;
         initializeBasicVariables();
         calculateFrequency();
-        classificationOfUsers();  
-        startTrackingUsersTweets();
+        //classificationOfUsers();  
+        //startTrackingUsersTweets();
     }
     
     /**
@@ -119,7 +120,7 @@ public class TweetsAnalyzer {
     }
     
     private void setTrends(){
-        //CHECK! 
+        //System.out.println("*****Seting Trends HashMap*****");
         DBCursor cursor = topicsColl.find(); //get a cursor that will run throughout the collection of trends.
         int pos = 0;
         
@@ -127,12 +128,10 @@ public class TweetsAnalyzer {
             DBObject obj=cursor.next();
             String name = obj.get("Name").toString(); //gets the name of trend.
             if(trends.containsKey(name)){
-                //dublicate
-                System.out.println("Duplicate trend name");
             }else{
                 trends.put(name, pos);
+                //System.out.println("Trend: " + name + "is number: " + pos);
                 pos++;
-                System.out.println("Trend: " + name + "is number: " + pos + "\n");
             }
         }
     }
@@ -170,6 +169,7 @@ public class TweetsAnalyzer {
      */
     private void calculateFrequency() throws JSONException {
         System.out.println("start calculating frequency...");
+        setTrends();
         double counter=0; //how many tweets we want to examine
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
         int pos =0;
@@ -184,16 +184,15 @@ public class TweetsAnalyzer {
             String text = obj.get("text").toString(); //gets the text of the tweet. It can be used in order to specify what trend tweet is refering to.
             
             // TODO identify what trend it is refering to
-              int number = identifyTrend(text);
-            
+            int number = identifyTrend(text);
             
             //Gets the id of user
             JSONObject jobj=new JSONObject(obj.toString());
             String userID= jobj.getJSONObject("user").getString("id_str");
-            statistics.get(uniqueIds.get(userID)).addTrend(number);
             System.out.println("User ID: "+ userID + "\n");
             System.out.println("tweet = "+text);
             System.out.println("Key is "+key);
+            System.out.println("Trend No is: "+ trends.get(key));
             
             System.out.println("---------");
                         
@@ -207,6 +206,8 @@ public class TweetsAnalyzer {
                 //System.out.println("+++ New user added! " + userID);
             }
             //System.out.println("---------------------------------------------------");
+            statistics.get(uniqueIds.get(userID)).addTrend(number);
+
             counter++;
             
             finish++;
