@@ -60,6 +60,8 @@ public class TweetsAnalyzer {
     private StatusListener listener;
     private FilterQuery fq;
     private ConfigurationBuilder cb;
+    
+    String key;
     /**
      * Constructor.
      * Initializes Mongo, calculates the frequency of tweets for each user
@@ -152,6 +154,7 @@ public class TweetsAnalyzer {
             String trendName = (String) trend.getKey();
             int trendNumber = (int) trend.getValue();
             if (text.contains(trendName)){ //if the text contains the trend in it
+                key=trendName;
                 return trendNumber;
             }
         }
@@ -170,6 +173,7 @@ public class TweetsAnalyzer {
         double counter=0; //how many tweets we want to examine
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
         int pos =0;
+        int finish=0;
 	while (cursor.hasNext() && counter <10000000) { //for each tweet in the collection
             //System.out.println("---------------------------------------------------");
             //we have to calculate the number of tweets at each trending topic...
@@ -180,14 +184,18 @@ public class TweetsAnalyzer {
             String text = obj.get("text").toString(); //gets the text of the tweet. It can be used in order to specify what trend tweet is refering to.
             
             // TODO identify what trend it is refering to
-            // int number = identifyTrend(text);
-            // statistics.get(uniqueIds.get(userID)).addTrend(number);
+              int number = identifyTrend(text);
+            
             
             //Gets the id of user
             JSONObject jobj=new JSONObject(obj.toString());
             String userID= jobj.getJSONObject("user").getString("id_str");
-            
+            statistics.get(uniqueIds.get(userID)).addTrend(number);
             System.out.println("User ID: "+ userID + "\n");
+            System.out.println("tweet = "+text);
+            System.out.println("Key is "+key);
+            
+            System.out.println("---------");
                         
             if(uniqueIds.containsKey(userID)){
                 statistics.get(uniqueIds.get(userID)).increaseNumberOfTweets();
@@ -200,6 +208,11 @@ public class TweetsAnalyzer {
             }
             //System.out.println("---------------------------------------------------");
             counter++;
+            
+            finish++;
+            if(finish==10){
+                break;
+            }
 	}
     }
     
