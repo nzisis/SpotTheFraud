@@ -1,5 +1,8 @@
 package spotthefraud;
 
+import java.util.Comparator;
+import java.util.HashSet;
+
 /**
  *
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
@@ -10,22 +13,19 @@ public class FollowedUser {
     private int totalNumberOfTweets; //each user's total number of Tweets in our database
     //private double id;
     private String userID;
+    private HashSet<Integer> trendsOccured;
     
     
     public FollowedUser(){
-        //userID =0;
         userID="";   
         totalNumberOfTweets = 0;
+        trendsOccured = new HashSet<>();
     }
-  /*  
-    public FollowedUser(int userID, int totalNumberOfTweets){
-        this.userID  = userID;
-        this.totalNumberOfTweets = totalNumberOfTweets;
-    }*/
-    
+ 
     public FollowedUser(String userID, int totalNumberOfTweets){
         this.userID  = userID;
         this.totalNumberOfTweets = totalNumberOfTweets;
+        this.trendsOccured = new HashSet<>();
     }
     
     public void setUserID(String userID){
@@ -47,4 +47,19 @@ public class FollowedUser {
     public int getTotalNumberOfTweets(){
         return totalNumberOfTweets;
     }
+    
+    public HashSet<Integer> getTrendsOccured(){
+        return trendsOccured;
+    }
+    
+    public void addTrend(int numberOfTrend){
+        trendsOccured.add(numberOfTrend);
+    }
+    
+    public void printTrendsOccured() {
+        for(Integer occ : trendsOccured){
+            System.out.println("Trend: " + occ + "\n");
+        }
+    }
+   
 }

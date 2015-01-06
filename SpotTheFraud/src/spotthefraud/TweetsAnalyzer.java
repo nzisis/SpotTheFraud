@@ -49,11 +49,12 @@ public class TweetsAnalyzer {
     private ArrayList<FollowedUser> group4;
     private ArrayList<FollowedUser> usersCollection; //final collection of users that will be followed
     
+    private HashMap<String, Integer> trends; // to set a number for each trend
     private HashMap<String,Integer> uniqueIds;
     
     private MongoClient client;
-    private DB TweetDb,FollowedUsers;
-    private DBCollection tweetColl,followedColl;
+    private DB TrendsDb, TweetDb,FollowedUsers;
+    private DBCollection topicsColl,tweetColl,followedColl;
 
     private TwitterStream stream;
     private StatusListener listener;
@@ -66,17 +67,19 @@ public class TweetsAnalyzer {
      * users from each group and we store them in usersCollection.
      * @throws JSONException 
      */
-    public TweetsAnalyzer()  {
+    public TweetsAnalyzer() throws JSONException  {
         statistics = new ArrayList<>();
         group1 = new ArrayList<>();
         group2 = new ArrayList<>();
         group3 = new ArrayList<>();
         group4 = new ArrayList<>();
+        trends = new HashMap<>();
         uniqueIds=new HashMap<>();
         usersCollection=new ArrayList<>();
         initializeBasicVariables();
         calculateFrequency();
-        classificationOfUsers();        
+        classificationOfUsers();  
+        startTrackingUsersTweets();
     }
     
     /**
@@ -93,38 +96,107 @@ public class TweetsAnalyzer {
         cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
         cb.setJSONStoreEnabled(true); //We use this as we pull json files from Twitter Streaming API
         
-          try {
-             client=new MongoClient("localhost",27017);
-             TweetDb=client.getDB("Tweets");
-             tweetColl=TweetDb.createCollection("tweetsColl", null);
+        try {
+            client=new MongoClient("localhost",27017);
+            
+            //Gets the trends collection from mongodb
+            TrendsDb = client.getDB("TopTopics");
+            topicsColl = TrendsDb.createCollection("topicsColl", null);
+            
+            //Gets the tweets collection from mongodb
+            TweetDb=client.getDB("Tweets");
+            tweetColl=TweetDb.createCollection("tweetsColl", null);
+
+            //gets the followed users collection from mongodb
+            FollowedUsers=client.getDB("Followed");
+            followedColl=FollowedUsers.createCollection("followedColl", null);
              
-             FollowedUsers=client.getDB("Followed");
-             followedColl=FollowedUsers.createCollection("followedColl", null);
-             
-            }catch (UnknownHostException ex) {
-             Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        }catch (UnknownHostException ex) {
+            Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
-    private void calculateFrequency() {
+    private void setTrends(){
+        //CHECK! 
+        DBCursor cursor = topicsColl.find(); //get a cursor that will run throughout the collection of trends.
+        int pos = 0;
+        
+        while (cursor.hasNext()){
+            DBObject obj=cursor.next();
+            String name = obj.get("Name").toString(); //gets the name of trend.
+            if(trends.containsKey(name)){
+                //dublicate
+                System.out.println("Duplicate trend name");
+            }else{
+                trends.put(name, pos);
+                pos++;
+                System.out.println("Trend: " + name + "is number: " + pos + "\n");
+            }
+        }
+    }
+    
+    /**
+     * Identifies if the text given agrees with a trend that we have in database.
+     * If so it returns the number of trend.
+     * If not, it returns -1
+     * @param text
+     * @return number of trend if found, -1 else
+     */
+    private int identifyTrend(String text){
+        //TODO
+        Iterator it = trends.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry trend = (Map.Entry)it.next();
+            //System.out.println(trend.getKey() + " = " + trend.getValue());
+            
+            String trendName = (String) trend.getKey();
+            int trendNumber = (int) trend.getValue();
+            if (text.contains(trendName)){ //if the text contains the trend in it
+                return trendNumber;
+            }
+        }
+        return -1;
+    }
+    
+    //use index createIndex()
+    //hashset gia trends pou emfanizete o kathe xristis !!!!!!
+    
+    /**
+     * Calculates the frequency of tweets appeared on our dataset for each user
+     * @throws JSONException 
+     */
+    private void calculateFrequency() throws JSONException {
         System.out.println("start calculating frequency...");
-        double counter=0; //how many tweets we want to include
+        double counter=0; //how many tweets we want to examine
         DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
         int pos =0;
 	while (cursor.hasNext() && counter <10000000) { //for each tweet in the collection
             //System.out.println("---------------------------------------------------");
             //we have to calculate the number of tweets at each trending topic...
-            String userID=cursor.next().get("id_str").toString();
-           //System.out.println(userID);
             
+            //CHEEEEEEEEEEEEEEEEEEEEEEEEECK!!
+            DBObject obj=cursor.next();
+            
+            String text = obj.get("text").toString(); //gets the text of the tweet. It can be used in order to specify what trend tweet is refering to.
+            
+            // TODO identify what trend it is refering to
+            // int number = identifyTrend(text);
+            // statistics.get(uniqueIds.get(userID)).addTrend(number);
+            
+            //Gets the id of user
+            JSONObject jobj=new JSONObject(obj.toString());
+            String userID= jobj.getJSONObject("user").getString("id_str");
+            
+            System.out.println("User ID: "+ userID + "\n");
+                        
             if(uniqueIds.containsKey(userID)){
                 statistics.get(uniqueIds.get(userID)).increaseNumberOfTweets();
                 //System.out.println(statistics.get(uniqueIds.get(userID)).getTotalNumberOfTweets());
             }else{
-                   uniqueIds.put(userID, pos);
-                   pos++;
-                   statistics.add(new FollowedUser(userID,1));
-                   //System.out.println("+++ New user added! " + userID);
+                uniqueIds.put(userID, pos);
+                pos++;
+                statistics.add(new FollowedUser(userID,1));
+                //System.out.println("+++ New user added! " + userID);
             }
             //System.out.println("---------------------------------------------------");
             counter++;
@@ -199,7 +271,7 @@ public class TweetsAnalyzer {
             FollowedUser user = new FollowedUser();
             
             for(int i=0; i<statistics.size(); i++){
-                
+                if(i>= statistics.size()){ break; }
                 user = statistics.get(i); //gets the next in line user
                 group1.add(user); //adds current user to group1
                 if (statistics.get(i+1).getTotalNumberOfTweets() != user.getTotalNumberOfTweets()){
@@ -212,6 +284,7 @@ public class TweetsAnalyzer {
             int critical2 = 0; //will help split the database in 3 parts
 
             for(int i=critical; i<statistics.size(); i++){
+                if(i>= statistics.size()){ break; }
                 user = statistics.get(i); //gets the next in line user
                 group2.add(user);
                 if(statistics.get(i+1).getTotalNumberOfTweets() != user.getTotalNumberOfTweets()){
@@ -224,6 +297,7 @@ public class TweetsAnalyzer {
             int critical3 = 0;//will help split the database in 4 parts
 
             for(int i=critical2; i<statistics.size(); i++){
+                if(i>= statistics.size()){ break; }
                 user = statistics.get(i); //gets the next in line user
                 group3.add(user);
                 if(statistics.get(i+1).getTotalNumberOfTweets() != user.getTotalNumberOfTweets()){
@@ -235,6 +309,7 @@ public class TweetsAnalyzer {
             
             //add rest of items in 4th group
             for(int i=critical3; i<statistics.size(); i++){
+                if(i>= statistics.size()){ break; }
                 user = statistics.get(i);
                 group4.add(user);
             }
@@ -378,8 +453,11 @@ public class TweetsAnalyzer {
         }
     }
     
+    /**
+     * Follows the users that exists in userCollection (40 people)
+     * It runs for 7 days
+     */
     public void startTrackingUsersTweets(){
-        //na allaksoume ta Long se String !
         
         listener=new StatusListener() {
 
@@ -396,11 +474,12 @@ public class TweetsAnalyzer {
                          }
                  }
                  if(flag){
-                 String json=DataObjectFactory.getRawJSON(status);
-                 System.out.println("json");
-                 DBObject jsonObj=(DBObject) JSON.parse(json);
-                 followedColl.insert(jsonObj);
+                    String json=DataObjectFactory.getRawJSON(status);
+                    System.out.println("json");
+                    DBObject jsonObj=(DBObject) JSON.parse(json);
+                    followedColl.insert(jsonObj);
                  }
+                 
                  //TODO if seven days passed stop the process
             }
 
