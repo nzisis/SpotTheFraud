@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package spotthefraud;
 
 import com.mongodb.DB;
@@ -10,7 +6,6 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.util.JSON;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -25,23 +20,18 @@ import twitter4j.conf.ConfigurationBuilder;
  * @author geomih
  */
 public class ExportData {
-    
-    
+    //basic variables for Mongo & Twitter API
     private MongoClient client;
     private DB FollowedUsers;
     private DBCollection followedColl;
     private ConfigurationBuilder cb;
-    private ArrayList<FollowedUserDetails> followedUsers;
     
+    private ArrayList<FollowedUserDetails> followedUsers; //creates the arraylist of final data of followed users
     
-    
-    
-    public ExportData(){
+    public ExportData() throws JSONException{
         initBasicVariables();
         export();
     }
-    
-    
     
     private void initBasicVariables(){
         cb=new ConfigurationBuilder();
@@ -51,120 +41,107 @@ public class ExportData {
         cb.setOAuthAccessTokenSecret("Tc40irSU8G15IvvEu6EuVjsaM1xQAVCDzJoaSTnxYVFOI");
         cb.setJSONStoreEnabled(true); //We use this as we pull json files from Twitter Streaming API
         
-          try {
-             client=new MongoClient("localhost",27017);
-           
-             FollowedUsers=client.getDB("Tweets");
-             followedColl=FollowedUsers.createCollection("tweetsColl", null);
-             
+        try {
+            client=new MongoClient("localhost",27017);
+            FollowedUsers=client.getDB("Followed");
+            followedColl=FollowedUsers.createCollection("followedColl", null);
             }catch (UnknownHostException ex) {
              Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
             }
-          
-          followedUsers=new ArrayList<>();
-          
+        
+        followedUsers=new ArrayList<>(); 
     }
     
     
-    public void export(){
-        
+    public void export() throws JSONException{
         
         DBCursor cursor = followedColl.find(); //get a cursor that will run throughout the collection.
-           int mpos=0;
 	while (cursor.hasNext()) { //for each tweet in the collection
+            DBObject obj=cursor.next(); //stores the tweet data into obj
+            FollowedUserDetails tweet_user; //going to store the details of each tweet and then insert into arraylist followedUsers
+            //init variables
+            boolean flag=false; //used to identify if a user is already in the list or not
+            int tweets=0,user_mentions=0,user_hashtag=0,user_url=0,retweeted=0,reply=0,retweet_count=0; 
+            String expanded_url[]=new String[1];
+            String tweet="", reply_to_userID="";
             
-             DBObject obj=cursor.next();
-             System.out.println(obj.toString());
-             String json[]=obj.toString().split("}");
-//             for(int i=0; i<json.length; i++){
-//                 System.out.println(json[i]);
-//             }
-//            System.out.println("Data");
-             String userID=obj.get("id_str").toString();
-             System.out.println("1) "+userID);
-             FollowedUserDetails tweet_user;
-             
-             int pos=0;
-             boolean flag=false;
-             int tweets=0,user_mentions=0,user_hashtag=0,user_url=0,retweeted=0,reply=0,retweet_count=0;
-             String expanded_url[]=new String[1];
-             String tweet="";
+            //======= GETTING USER ID =======
+            JSONObject jobj=new JSONObject(obj.toString()); 
+            String userID= jobj.getJSONObject("user").getString("id_str"); //gets the ID of user
+            System.out.println("1) userID: "+userID);
+            
+            //======= GETTING REPLY_TO_STATUS (true/false)=======
+            if(obj.get("in_reply_to_status_id_str")!=null){
+                reply+=1;
+                reply_to_userID = obj.get("in_reply_to_status_id_str").toString();
+            }
+            System.out.println("2) reply?: "+reply_to_userID);
 
-             String reply_str="";
-             if(obj.get("in_reply_to_status_id_str")!=null){
-                 reply_str=obj.get("in_reply_to_status_id_str").toString();
-             }
-             System.out.println("2)"+reply_str);
-             //String reply_str =obj.get("in_reply_to_status_id_str").toString();
-             String retweet_count_str=obj.get("retweet_count").toString();
-             System.out.println("3) "+retweet_count);
-             String source=obj.get("source").toString();
-             System.out.println("4) "+source);
-             retweet_count=Integer.parseInt(retweet_count_str);
-             
+            //======= GETTING RETWEET_COUNT =======
+            String retweet_count_str=obj.get("retweet_count").toString();
+            retweet_count=Integer.parseInt(retweet_count_str);
+            System.out.println("3) retweet_count: "+retweet_count);
             
-            try {
-                 JSONObject jobj=new JSONObject(obj.toString());
-                 String tweets_str = jobj.getJSONObject("user").getString("statuses_count");
-                 tweets=Integer.parseInt(tweets_str);
-                 System.out.println("5) "+tweets);
-                
-                JSONObject entities=jobj.getJSONObject("entities");
-                JSONArray mentionArray=entities.getJSONArray("user_mentions");
-                JSONArray hashtagArray=entities.getJSONArray("hashtags");
-                JSONArray urlArray=entities.getJSONArray("urls");
-                
-                 user_mentions=mentionArray.length();
-                 System.out.println("6) "+user_mentions);
-                 user_hashtag=hashtagArray.length();
-                  System.out.println("7) "+user_hashtag);
-                 user_url=urlArray.length();
-                  System.out.println("8) "+user_url);
-                 
-                 if(user_url!=0){
-                     expanded_url=new String[user_url];
-                     for(int i=0; i<user_url; i++){
-                     expanded_url[i]=urlArray.getJSONObject(i).getString("expanded_url");
-                      System.out.println("9) "+user_mentions);
-                     }
-                     
-                 }
-                
-                
-                if(jobj.has("retweeted_status")){
-                    retweeted+=1;
-                    System.out.println("Yparexei retweeted");
-                }else{
-                   tweet=obj.get("text").toString();
-                    System.out.println("Tweet is "+tweet);
+            //======= GETTING SOURCE =======
+            String source=obj.get("source").toString();
+            System.out.println("4) source: "+source);
+            
+            //======= GETTING TWEETS (STATUSES_COUNT) =======
+            String tweets_str = jobj.getJSONObject("user").getString("statuses_count");
+            tweets=Integer.parseInt(tweets_str);
+            System.out.println("5) statuses_count: "+tweets);
+
+            JSONObject entities=jobj.getJSONObject("entities"); //getting inside "entities" in json
+            
+            //======= GETTING MENTIONS =======
+            JSONArray mentionArray=entities.getJSONArray("user_mentions");
+            user_mentions=mentionArray.length();
+            System.out.println("6) mentions: "+user_mentions);
+            
+            //======= GETTING HASHTAGS =======
+            JSONArray hashtagArray=entities.getJSONArray("hashtags");
+            user_hashtag=hashtagArray.length();
+            System.out.println("7) hashtags: "+user_hashtag);
+                          
+            //======= GETTING URLs =======
+            JSONArray urlArray=entities.getJSONArray("urls");
+            user_url=urlArray.length();
+            System.out.println("8) urls: "+user_url);
+
+            //======= GETTING EXPANDED URLs =======
+            if(user_url!=0){ //if URLs exist, it takes the expanded version of them
+                expanded_url=new String[user_url];
+                for(int i=0; i<user_url; i++){
+                    expanded_url[i]=urlArray.getJSONObject(i).getString("expanded_url");
+                    System.out.println("9) Expanded URL: "+expanded_url[i]);
                 }
-                
-                if(reply_str!=""){
-                  reply+=1;
-                   System.out.println("Yparxei reply");
-                }
-                
-                //int not=obj.getJson
-            } catch (JSONException ex) {
-                Logger.getLogger(ExportData.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            //------- CHECK IF RETWEETED -------
+            if(jobj.has("retweeted_status")){
+                retweeted+=1;
+            }else{
+               tweet=obj.get("text").toString();
+                System.out.println("Tweet text is: "+tweet);
             }
             
-              for(FollowedUserDetails user :followedUsers){
-                 String id=user.getUserID();
-                 if(id.equals(userID)){
+            int pos =0;
+            for(FollowedUserDetails user :followedUsers){
+                String id=user.getUserID();
+                if(id.equals(userID)){
                     flag=true;
-                     break;
-                 }
-                 pos++;
-             }
+                    break;
+                }
+                pos++;
+            }
              
-             //Elegxoume to id ama uparxei idi sta arrraylist ama dn uparxei ftiaxnoume kainourio xrhsth
-             if(!flag){
-                  System.out.println("Kainourios xrhsths");
-                 tweet_user=new FollowedUserDetails(userID);
-                 tweet_user.setNOTweets(tweets);
+            //Elegxoume to id ama uparxei idi sta arrraylist ama dn uparxei ftiaxnoume kainourio xrhsth
+            if(!flag){
+                System.out.println("Kainourios xrhsths");
+                tweet_user=new FollowedUserDetails(userID);
+                tweet_user.setNOTweets(tweets);
                 if(retweeted!=0){
-                 tweet_user.increaseNORetweets();
+                    tweet_user.increaseNORetweets();
                 }else{
                     tweet_user.addAndProcessTweet(tweet);
                 }
@@ -183,14 +160,14 @@ public class ExportData {
                 tweet_user.increaseSourceCount(source);
                 followedUsers.add(tweet_user);
                 
-             }else{
-                 System.out.println("Yparxei o xrhsths");
-                 followedUsers.get(pos).setNOTweets(tweets);
-                 if(retweeted!=0){
-                 followedUsers.get(pos).increaseNORetweets();
+            }else{
+                System.out.println("Yparxei o xrhsths");
+                followedUsers.get(pos).setNOTweets(tweets);
+                if(retweeted!=0){
+                followedUsers.get(pos).increaseNORetweets();
                 }else{
                      followedUsers.get(pos).addAndProcessTweet(tweet);
-                 }
+                }
                 if(reply!=0){
                     followedUsers.get(pos).increaseNOReplies();
                 }
@@ -198,42 +175,29 @@ public class ExportData {
                 followedUsers.get(pos).increaseNOHashtags(user_hashtag);
                 followedUsers.get(pos).increaseNOUrls(user_url);
                 followedUsers.get(pos).increaseNORReceived(retweet_count);
-                 if(user_url!=0){
+                if(user_url!=0){
                     for(int i=0; i<user_url; i++){
                     followedUsers.get(pos).addUniqueURL(expanded_url[i]);
                     }
                 }
-                   followedUsers.get(pos).increaseSourceCount(source);
-                 
-                 
-             }
-                
-             
-            if(mpos==1){
-                cursor=followedColl.find();
+                followedUsers.get(pos).increaseSourceCount(source);
             }
-            if(mpos==2){
-                break;
-            }
-            mpos++;
             System.out.println("---------------");
-            
 	}
         
-           for(FollowedUserDetails user :followedUsers){
-              
-               user.calculateAvegHashtagsPerTweet();
-               user.calculateAvegRetweetPerTweet();
-               user.calculatePercentageOfTweetsWithHashtag();
-               user.calculatePercentageOfTweetsWithURL();
-               user.calculateURLsRatio();
-               user.calculateMostFrequentSource();
-               user.calculateCopies();
-             }
+        for(FollowedUserDetails user :followedUsers){
+            user.calculateAvegHashtagsPerTweet();
+            user.calculateAvegRetweetPerTweet();
+            user.calculatePercentageOfTweetsWithHashtag();
+            user.calculatePercentageOfTweetsWithURL();
+            user.calculateURLsRatio();
+            user.calculateMostFrequentSource();
+            user.calculateCopies();
+        }
         
-        
-        
+        //PRINTING FINAL RESULTS
+        for(FollowedUserDetails user :followedUsers){
+            user.printAll();
+        }
     }
-    
-    
 }

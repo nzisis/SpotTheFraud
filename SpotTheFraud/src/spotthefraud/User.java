@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package spotthefraud;
-
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -15,14 +9,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * 4o meros - Epipedo A
  * @author Sokratis
  */
 public class User {
-    
-    private int followers,followees;
     private String userID;
-    private double ratio;//followers/followees
+    private int followers;
+    private int followees;
+    private double ratio; //followers/followees
     private String accountAge;
     
     public User(){
@@ -78,46 +72,41 @@ public class User {
     }
 
     public void setAccountAge(String createdAge) {
-        
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        
         Date date =new Date();
-        
         setAccountAge(createdAge,dateFormat.format(date).toString());
-        
     }
 
-   public void setAccountAge(String createdAge,String currentDate){
-       SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    public void setAccountAge(String createdAge,String currentDate){
+        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
        
-       Date d1;
-       Date d2;
+        Date d1,d2;
         try {
             d1 = format.parse(createdAge);
             d2 = format.parse(currentDate);
-            
+
             long diff = d2.getTime() - d1.getTime();
-            
+
             long diffSeconds = diff / 1000 % 60;
             long diffMinutes = diff / (60 * 1000) % 60;
             long diffHours = diff / (60 * 60 * 1000) % 24;
             long diffDays = diff / (24 * 60 * 60 * 1000);
-            
+
             StringBuilder sb = new StringBuilder();
             sb.append(diffDays).append("days, ").append(diffHours).append("hours, ").append(diffMinutes).append("minutes, ").append(diffSeconds).append("seconds.");
-            
+
             this.accountAge = sb.toString();
         } catch (ParseException ex) {
             Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
         }
- 
-			
-	
-       
    }
     
-    
-    
-     
-    
+    public void print(){
+        System.out.println("-------------");
+        System.out.println("User ID: " + this.userID);
+        System.out.println("Followers: " + this.followers);
+        System.out.println("Followees: " + this.followees);
+        System.out.println("Ration: " + this.ratio);
+        System.out.println("Acount Age: " + this.accountAge);
+    }
 }

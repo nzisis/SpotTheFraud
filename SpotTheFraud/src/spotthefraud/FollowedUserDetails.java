@@ -33,19 +33,21 @@ public class FollowedUserDetails extends User {
 
     //meros 3
     private HashMap<String, Integer> tweetsPerSource;
-    private String mostFrequenltySource;
+    private String mostFrequentSource;
 
     //meros4
-    // private int uniqueURLs;//facebook.com/link1, facebook.com/link2 ....
+    private double urlRatio; 
     private int uniqueDomains;//facebook.com, twitter.com, youtube.com....
     private HashSet<String> uniqueURLs;
-    private double urlRatio;
 
     public FollowedUserDetails(String id) {
         super(id);
         initVariables();
     }
 
+    /**
+     * Initializing basic variables for Users that will later be changed
+     */
     private void initVariables() {
         noTweets = 0;
         noRetweets = 0;
@@ -60,7 +62,7 @@ public class FollowedUserDetails extends User {
         percentageOfTweetsWithURL = 0;
         tweetsPerSource = new HashMap<>();
         uniqueURLs = new HashSet<>();
-        mostFrequenltySource = "No one";
+        mostFrequentSource = "No one";
         urlRatio = 0;
         tweets = new ArrayList<>();
         copiedTweets = 0;
@@ -68,6 +70,10 @@ public class FollowedUserDetails extends User {
 
     public void setNOTweets(int noTweets) {
         this.noTweets = noTweets;
+    }
+    
+    public void increaseNOTweets(int noTweets) {
+        this.noTweets += noTweets;
     }
 
     public void increaseNORetweets() {
@@ -131,14 +137,12 @@ public class FollowedUserDetails extends User {
 
             if (maxFrequency < (Integer) user.getValue()) {
                 maxFrequency = (Integer) user.getValue();
-                mostFrequenltySource = (String) user.getKey();
+                mostFrequentSource = (String) user.getKey();
             }
         }
-
     }
 
     public void addUniqueURL(String url) {
-
         uniqueURLs.add(url);
     }
 
@@ -165,7 +169,6 @@ public class FollowedUserDetails extends User {
         } else {
             tweets.add(newTweet);
         }
-
     }
 
     public void calculateCopies() {
@@ -179,7 +182,6 @@ public class FollowedUserDetails extends User {
                 }
             }
         }
-
     }
 
     public int getNoTweets() {
@@ -231,7 +233,7 @@ public class FollowedUserDetails extends User {
     }
 
     public String getMostFrequenltySource() {
-        return mostFrequenltySource;
+        return mostFrequentSource;
     }
 
     public int getUniqueDomains() {
@@ -242,6 +244,39 @@ public class FollowedUserDetails extends User {
         return urlRatio;
     }
     
-    
-    
+    public void printAll() {
+        //todo
+        this.print();
+        System.out.println("====== 1o MEROS ======");
+        System.out.println("Number of Tweets: " + this.noTweets);
+        System.out.println("Number of Retweets: " + this.noRetweets);
+        System.out.println("Number of Replier: " + this.noReplies);
+        System.out.println("Number of Mentions: " + this.noMentions);
+        System.out.println("Number of RT received:" + this.norReceived);
+        System.out.println("Average Retweets Per Tweet: " + this.averageRetweetsPerTweet);
+        System.out.println("Number of Hashtags: " + this.noHashtags);
+        System.out.println("Average Hashtags Per Tweet: " + this.averageHashtagsPerTweet);
+        System.out.println("Percentage of tweets with hashtags: " + this.percentageOfTweetsWithHashtag);
+        System.out.println("Number of URLs: " + this.noURL);
+        System.out.println("Percentage of tweets with URL: " + this.percentageOfTweetsWithURL);
+        
+        System.out.println("====== 2o MEROS ======");
+        System.out.println("Number of copied tweets: " + this.copiedTweets);
+        System.out.println("ArrayList of tweets: ");
+        for(int i=0; i<tweets.size(); i++){
+            System.out.println("Tweet[" + i + "]: " + tweets.get(i));
+        }
+        
+        System.out.println("====== 3o MEROS ======");
+        System.out.println("Most Frequent Source: " + this.mostFrequentSource);
+//        System.out.println("HashMap of tweetsPerSource: ");
+//        for(int i=0; i<tweetsPerSource.size(); i++){
+//            System.out.println("Source[" + i + "]: " + tweetsPerSource.get(i).toString());
+//        }
+        
+        System.out.println("====== 4o MEROS ======");
+        System.out.println("URL Ratio: " + this.urlRatio);
+        System.out.println("Unique Domains: " + this.uniqueDomains);
+        //have to print also the unique URLs
+    }
 }

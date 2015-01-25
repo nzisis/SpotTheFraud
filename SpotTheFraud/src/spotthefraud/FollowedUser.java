@@ -15,9 +15,8 @@ public class FollowedUser {
     private String userID;
     private HashSet<Integer> trendsOccured;
     
-    
     public FollowedUser(){
-        userID="";   
+        userID="";
         totalNumberOfTweets = 0;
         trendsOccured = new HashSet<>();
     }
@@ -26,6 +25,13 @@ public class FollowedUser {
         this.userID  = userID;
         this.totalNumberOfTweets = totalNumberOfTweets;
         this.trendsOccured = new HashSet<>();
+    }
+    
+    public FollowedUser(String userID, int totalNumberOfTweets, int numberOfTrend){
+        this.userID  = userID;
+        this.totalNumberOfTweets = totalNumberOfTweets;
+        this.trendsOccured = new HashSet<>();
+        trendsOccured.add(numberOfTrend);
     }
     
     public void setUserID(String userID){
