@@ -5,6 +5,8 @@
  */
 package spotthefraud;
 
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,12 +38,17 @@ public class FollowedUserDetails extends User {
     private String mostFrequentSource;
 
     //meros4
-    private double urlRatio; 
+    private double urlRatio;
     private int uniqueDomains;//facebook.com, twitter.com, youtube.com....
     private HashSet<String> uniqueURLs;
 
     public FollowedUserDetails(String id) {
         super(id);
+        initVariables();
+    }
+    
+    public FollowedUserDetails (String userID,int followers,int followees,String accountAge){
+        super(userID, followers, followees, accountAge);
         initVariables();
     }
 
@@ -71,7 +78,7 @@ public class FollowedUserDetails extends User {
     public void setNOTweets(int noTweets) {
         this.noTweets = noTweets;
     }
-    
+
     public void increaseNOTweets(int noTweets) {
         this.noTweets += noTweets;
     }
@@ -102,22 +109,22 @@ public class FollowedUserDetails extends User {
     }
 
     public void calculateAvegRetweetPerTweet() {
-        this.averageRetweetsPerTweet = norReceived / noTweets;
+        this.averageRetweetsPerTweet = (double) norReceived / noTweets;
     }
 
     public void calculateAvegHashtagsPerTweet() {
-        this.averageHashtagsPerTweet = noHashtags / noTweets;
+        this.averageHashtagsPerTweet = (double) noHashtags / noTweets;
     }
 
     public void calculatePercentageOfTweetsWithHashtag() {
         if (noHashtags != 0) {
-            this.percentageOfTweetsWithHashtag = (noTweets / noHashtags) * 100;
+            this.percentageOfTweetsWithHashtag = (double) (noHashtags / noTweets) * 100;
         }
     }
 
     public void calculatePercentageOfTweetsWithURL() {
         if (noURL != 0) {
-            this.percentageOfTweetsWithURL = (noTweets / noURL) * 100;
+            this.percentageOfTweetsWithURL =  (double) ( noURL / noTweets) * 100;
         }
     }
 
@@ -148,7 +155,7 @@ public class FollowedUserDetails extends User {
 
     public void calculateURLsRatio() {
         if (noURL != 0) {
-            urlRatio = uniqueURLs.size() / noURL;
+            urlRatio = (double) uniqueURLs.size() / noURL;
         }
     }
 
@@ -159,13 +166,12 @@ public class FollowedUserDetails extends User {
         if (elements.length != 0) {
             String cleanedTweet = "";
             for (int i = 0; i < elements.length; i++) {
-                String newElements[] = elements[i].split(" ");
+                String[] newElements = elements[i].split(" ");
                 for (int j = 1; j < newElements.length; j++) {
                     cleanedTweet += newElements[1];
                 }
             }
             tweets.add(cleanedTweet);
-
         } else {
             tweets.add(newTweet);
         }
@@ -243,9 +249,13 @@ public class FollowedUserDetails extends User {
     public double getUrlRatio() {
         return urlRatio;
     }
-    
+
     public void printAll() {
-        //todo
+        NumberFormat nf = NumberFormat.getPercentInstance();
+        nf.setMaximumFractionDigits(2);
+        nf.setMinimumFractionDigits(2);
+        nf.setRoundingMode(RoundingMode.HALF_UP);
+        
         this.print();
         System.out.println("====== 1o MEROS ======");
         System.out.println("Number of Tweets: " + this.noTweets);
@@ -253,27 +263,27 @@ public class FollowedUserDetails extends User {
         System.out.println("Number of Replier: " + this.noReplies);
         System.out.println("Number of Mentions: " + this.noMentions);
         System.out.println("Number of RT received:" + this.norReceived);
-        System.out.println("Average Retweets Per Tweet: " + this.averageRetweetsPerTweet);
+        System.out.println("Average Retweets Per Tweet: " + nf.format(this.averageRetweetsPerTweet));
         System.out.println("Number of Hashtags: " + this.noHashtags);
-        System.out.println("Average Hashtags Per Tweet: " + this.averageHashtagsPerTweet);
-        System.out.println("Percentage of tweets with hashtags: " + this.percentageOfTweetsWithHashtag);
+        System.out.println("Average Hashtags Per Tweet: " + nf.format(this.averageHashtagsPerTweet));
+        System.out.println("Percentage of tweets with hashtags: " + nf.format(this.percentageOfTweetsWithHashtag));
         System.out.println("Number of URLs: " + this.noURL);
-        System.out.println("Percentage of tweets with URL: " + this.percentageOfTweetsWithURL);
-        
+        System.out.println("Percentage of tweets with URL: " + nf.format(this.percentageOfTweetsWithURL));
+
         System.out.println("====== 2o MEROS ======");
         System.out.println("Number of copied tweets: " + this.copiedTweets);
         System.out.println("ArrayList of tweets: ");
-        for(int i=0; i<tweets.size(); i++){
+        for (int i = 0; i < tweets.size(); i++) {
             System.out.println("Tweet[" + i + "]: " + tweets.get(i));
         }
-        
+
         System.out.println("====== 3o MEROS ======");
         System.out.println("Most Frequent Source: " + this.mostFrequentSource);
 //        System.out.println("HashMap of tweetsPerSource: ");
 //        for(int i=0; i<tweetsPerSource.size(); i++){
 //            System.out.println("Source[" + i + "]: " + tweetsPerSource.get(i).toString());
 //        }
-        
+
         System.out.println("====== 4o MEROS ======");
         System.out.println("URL Ratio: " + this.urlRatio);
         System.out.println("Unique Domains: " + this.uniqueDomains);

@@ -1,7 +1,9 @@
 
 package spotthefraud;
 
+import java.math.RoundingMode;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,6 +37,7 @@ public class User {
         this.followers = followers;
         this.followees = followees;
         this.accountAge = accountAge;
+        //setAccountAge(accountAge);
         ratio = (double) followers/followees;
     }
 
@@ -102,11 +105,16 @@ public class User {
    }
     
     public void print(){
+        NumberFormat nf = NumberFormat.getPercentInstance();
+        nf.setMaximumFractionDigits(2);
+        nf.setMinimumFractionDigits(2);
+        nf.setRoundingMode(RoundingMode.HALF_UP);
+        
         System.out.println("-------------");
         System.out.println("User ID: " + this.userID);
         System.out.println("Followers: " + this.followers);
         System.out.println("Followees: " + this.followees);
-        System.out.println("Ration: " + this.ratio);
+        System.out.println("Ratio: " + nf.format(this.ratio));
         System.out.println("Acount Age: " + this.accountAge);
     }
 }

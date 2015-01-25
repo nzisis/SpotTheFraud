@@ -68,52 +68,57 @@ public class ExportData {
             //======= GETTING USER ID =======
             JSONObject jobj=new JSONObject(obj.toString()); 
             String userID= jobj.getJSONObject("user").getString("id_str"); //gets the ID of user
-            System.out.println("1) userID: "+userID);
+            //System.out.println("1) userID: "+userID);
+            int followers = jobj.getJSONObject("user").getInt("followers_count");
+            //System.out.println("Followers: " + followers);
+            int followees =jobj.getJSONObject("user").getInt("friends_count");
+            String account_age = jobj.getJSONObject("user").getString("created_at");
+            //System.out.println("Account age: "+ account_age);
             
             //======= GETTING REPLY_TO_STATUS (true/false)=======
             if(obj.get("in_reply_to_status_id_str")!=null){
                 reply+=1;
                 reply_to_userID = obj.get("in_reply_to_status_id_str").toString();
             }
-            System.out.println("2) reply?: "+reply_to_userID);
+            //System.out.println("2) reply?: "+reply_to_userID);
 
             //======= GETTING RETWEET_COUNT =======
             String retweet_count_str=obj.get("retweet_count").toString();
             retweet_count=Integer.parseInt(retweet_count_str);
-            System.out.println("3) retweet_count: "+retweet_count);
+           // System.out.println("3) retweet_count: "+retweet_count);
             
             //======= GETTING SOURCE =======
             String source=obj.get("source").toString();
-            System.out.println("4) source: "+source);
+            //System.out.println("4) source: "+source);
             
             //======= GETTING TWEETS (STATUSES_COUNT) =======
             String tweets_str = jobj.getJSONObject("user").getString("statuses_count");
             tweets=Integer.parseInt(tweets_str);
-            System.out.println("5) statuses_count: "+tweets);
+            //System.out.println("5) statuses_count: "+tweets);
 
             JSONObject entities=jobj.getJSONObject("entities"); //getting inside "entities" in json
             
             //======= GETTING MENTIONS =======
             JSONArray mentionArray=entities.getJSONArray("user_mentions");
             user_mentions=mentionArray.length();
-            System.out.println("6) mentions: "+user_mentions);
+            //System.out.println("6) mentions: "+user_mentions);
             
             //======= GETTING HASHTAGS =======
             JSONArray hashtagArray=entities.getJSONArray("hashtags");
             user_hashtag=hashtagArray.length();
-            System.out.println("7) hashtags: "+user_hashtag);
+            //System.out.println("7) hashtags: "+user_hashtag);
                           
             //======= GETTING URLs =======
             JSONArray urlArray=entities.getJSONArray("urls");
             user_url=urlArray.length();
-            System.out.println("8) urls: "+user_url);
+            //System.out.println("8) urls: "+user_url);
 
             //======= GETTING EXPANDED URLs =======
             if(user_url!=0){ //if URLs exist, it takes the expanded version of them
                 expanded_url=new String[user_url];
                 for(int i=0; i<user_url; i++){
                     expanded_url[i]=urlArray.getJSONObject(i).getString("expanded_url");
-                    System.out.println("9) Expanded URL: "+expanded_url[i]);
+                    //System.out.println("9) Expanded URL: "+expanded_url[i]);
                 }
             }
 
@@ -122,7 +127,7 @@ public class ExportData {
                 retweeted+=1;
             }else{
                tweet=obj.get("text").toString();
-                System.out.println("Tweet text is: "+tweet);
+                //System.out.println("Tweet text is: "+tweet);
             }
             
             int pos =0;
@@ -137,8 +142,8 @@ public class ExportData {
              
             //Elegxoume to id ama uparxei idi sta arrraylist ama dn uparxei ftiaxnoume kainourio xrhsth
             if(!flag){
-                System.out.println("Kainourios xrhsths");
-                tweet_user=new FollowedUserDetails(userID);
+                //System.out.println("Kainourios xrhsths");
+                tweet_user=new FollowedUserDetails(userID, followers, followees, account_age);
                 tweet_user.setNOTweets(tweets);
                 if(retweeted!=0){
                     tweet_user.increaseNORetweets();
@@ -161,7 +166,7 @@ public class ExportData {
                 followedUsers.add(tweet_user);
                 
             }else{
-                System.out.println("Yparxei o xrhsths");
+                //System.out.println("Yparxei o xrhsths");
                 followedUsers.get(pos).setNOTweets(tweets);
                 if(retweeted!=0){
                 followedUsers.get(pos).increaseNORetweets();
@@ -182,7 +187,7 @@ public class ExportData {
                 }
                 followedUsers.get(pos).increaseSourceCount(source);
             }
-            System.out.println("---------------");
+            //System.out.println("---------------");
 	}
         
         for(FollowedUserDetails user :followedUsers){
