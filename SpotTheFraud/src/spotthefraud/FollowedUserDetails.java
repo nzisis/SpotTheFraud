@@ -161,16 +161,17 @@ public class FollowedUserDetails extends User {
 
     public void addAndProcessTweet(String newTweet) {
 
-        String elements[] = newTweet.split("@");
+        String[] elements = newTweet.split("@");
         //@gregclermont no, there is not. ^TS
         if (elements.length != 0) {
             String cleanedTweet = "";
             for (int i = 0; i < elements.length; i++) {
                 String[] newElements = elements[i].split(" ");
                 for (int j = 1; j < newElements.length; j++) {
-                    cleanedTweet += newElements[1];
+                    cleanedTweet += newElements[j] + " ";
                 }
             }
+            cleanedTweet = cleanedTweet.replaceAll("https?://\\S+\\s?", "");
             tweets.add(cleanedTweet);
         } else {
             tweets.add(newTweet);

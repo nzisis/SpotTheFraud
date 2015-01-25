@@ -7,6 +7,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,7 +38,7 @@ public class User {
         this.followers = followers;
         this.followees = followees;
         this.accountAge = accountAge;
-        //setAccountAge(accountAge);
+        setAccountAge(accountAge);
         ratio = (double) followers/followees;
     }
 
@@ -80,10 +81,10 @@ public class User {
         setAccountAge(createdAge,dateFormat.format(date).toString());
     }
 
-    public void setAccountAge(String createdAge,String currentDate){
-        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-       
-        Date d1,d2;
+    public void setAccountAge(String createdAge, String currentDate) {
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
+        
+        Date d1, d2;
         try {
             d1 = format.parse(createdAge);
             d2 = format.parse(currentDate);
@@ -102,8 +103,8 @@ public class User {
         } catch (ParseException ex) {
             Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
         }
-   }
-    
+    }
+
     public void print(){
         NumberFormat nf = NumberFormat.getPercentInstance();
         nf.setMaximumFractionDigits(2);
