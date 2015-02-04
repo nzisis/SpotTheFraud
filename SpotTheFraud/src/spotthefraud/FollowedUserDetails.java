@@ -179,10 +179,15 @@ public class FollowedUserDetails extends User {
             for (int i = 0; i < elements.length; i++) {
                 String[] newElements = elements[i].split(" ");
                 for (int j = 1; j < newElements.length; j++) {
+<<<<<<< HEAD
                     cleanedTweet += newElements[j];
                     cleanedTweet += " ";
+=======
+                    cleanedTweet += newElements[j] + " ";
+>>>>>>> origin/master
                 }
             }
+            cleanedTweet = cleanedTweet.replaceAll("https?://\\S+\\s?", "");
             tweets.add(cleanedTweet);
         } else {
             tweets.add(newTweet);
