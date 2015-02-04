@@ -15,8 +15,11 @@ import java.util.Map;
 import org.shortdistance.LevenshteinDistance;
 
 /**
- *
- * @author Sokratis
+ * A representation of a Twitter user (extends User class). It stores many data
+ * relevant to a user account. It's used for storing the data that came from 
+ * the7 days tracking of 40 selected users.
+ * 
+ * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
 public class FollowedUserDetails extends User {
 
@@ -46,8 +49,8 @@ public class FollowedUserDetails extends User {
         super(id);
         initVariables();
     }
-    
-    public FollowedUserDetails (String userID,int followers,int followees,String accountAge){
+
+    public FollowedUserDetails(String userID, int followers, int followees, String accountAge) {
         super(userID, followers, followees, accountAge);
         initVariables();
     }
@@ -124,7 +127,7 @@ public class FollowedUserDetails extends User {
 
     public void calculatePercentageOfTweetsWithURL() {
         if (noURL != 0) {
-            this.percentageOfTweetsWithURL =  (double) ( noURL / noTweets) * 100;
+            this.percentageOfTweetsWithURL = (double) (noURL / noTweets) * 100;
         }
     }
 
@@ -136,6 +139,10 @@ public class FollowedUserDetails extends User {
         }
     }
 
+    /**
+     * calculates the most frequent source for the user after examining all the
+     * sources that he used.
+     */
     public void calculateMostFrequentSource() {
         Integer maxFrequency = -1;
         Iterator it = tweetsPerSource.entrySet().iterator();
@@ -159,16 +166,21 @@ public class FollowedUserDetails extends User {
         }
     }
 
+    /**
+     * Cleans tweets text from URLs and RT@ and keeps it pure text.
+     * @param newTweet 
+     */
     public void addAndProcessTweet(String newTweet) {
 
-        String elements[] = newTweet.split("@");
+        String[] elements = newTweet.split("@");
         //@gregclermont no, there is not. ^TS
         if (elements.length != 0) {
             String cleanedTweet = "";
             for (int i = 0; i < elements.length; i++) {
                 String[] newElements = elements[i].split(" ");
                 for (int j = 1; j < newElements.length; j++) {
-                    cleanedTweet += newElements[1];
+                    cleanedTweet += newElements[j];
+                    cleanedTweet += " ";
                 }
             }
             tweets.add(cleanedTweet);
@@ -177,16 +189,26 @@ public class FollowedUserDetails extends User {
         }
     }
 
+    /**
+     * Using the levenshtein distance it calculates how many tweets are actually
+     * duplicates. 
+     */
     public void calculateCopies() {
+        //System.out.println("Ksekinw calculate copies");
         int size = tweets.size();
+        //System.out.println("To plithos tweets: " + size);
         for (int i = 0; i < size; i++) {
+            //System.out.println("------------------------------- arxi eksw loop: " + i);
             for (int j = i + 1; j < size; j++) {
+                //System.out.println("========= arxi mesa loop: " + j);
                 int distance = LevenshteinDistance.computeDistance(tweets.get(i), tweets.get(j));
                 double normalized_distance = (double) distance / (tweets.get(i).length() + tweets.get(j).length());
                 if (normalized_distance < 0.1) {
                     copiedTweets++;
                 }
+                //System.out.println("telos mesa loop: " + j);
             }
+            //System.out.println("telos eksw loop: " + i);
         }
     }
 
@@ -255,7 +277,7 @@ public class FollowedUserDetails extends User {
         nf.setMaximumFractionDigits(2);
         nf.setMinimumFractionDigits(2);
         nf.setRoundingMode(RoundingMode.HALF_UP);
-        
+
         this.print();
         System.out.println("====== 1o MEROS ======");
         System.out.println("Number of Tweets: " + this.noTweets);

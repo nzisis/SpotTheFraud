@@ -4,7 +4,11 @@ import java.util.Comparator;
 import java.util.HashSet;
 
 /**
- *
+ * It stores the details we want for a followed user:
+ * the userID, the total number of tweets and a list of trends where he 
+ * tweeted on. It's used or storing users in ArrayList that filters the 
+ * Streaming API tracking users query.
+ * 
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
 public class FollowedUser {
