@@ -5,6 +5,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -33,7 +34,7 @@ public class ExportData {
 
     private ArrayList<FollowedUserDetails> followedUsers; //creates the arraylist of final data of followed users
 
-    public ExportData() throws JSONException {
+    public ExportData() throws JSONException, URISyntaxException {
         initBasicVariables();
         export();
     }
@@ -57,12 +58,13 @@ public class ExportData {
         followedUsers = new ArrayList<>();
     }
 
-    public void export() throws JSONException {
+    public void export() throws JSONException, URISyntaxException {
 
         DBCursor cursor = followedColl.find(); //get a cursor that will run throughout the collection.
         while (cursor.hasNext()) { //for each tweet in the collection
             DBObject obj = cursor.next(); //stores the tweet data into obj
             FollowedUserDetails tweet_user; //going to store the details of each tweet and then insert into arraylist followedUsers
+            
             //init variables
             boolean flag = false; //used to identify if a user is already in the list or not
             int tweets = 0, user_mentions = 0, user_hashtag = 0, user_url = 0, retweeted = 0, reply = 0, retweet_count = 0;
@@ -97,8 +99,8 @@ public class ExportData {
             //System.out.println("4) source: "+source);
 
             //======= GETTING TWEETS (STATUSES_COUNT) =======
-            String tweets_str = jobj.getJSONObject("user").getString("statuses_count");
-            tweets = Integer.parseInt(tweets_str);
+            //String tweets_str = jobj.getJSONObject("user").getString("statuses_count");
+            //tweets = Integer.parseInt(tweets_str);
             //System.out.println("5) statuses_count: "+tweets);
 
             JSONObject entities = jobj.getJSONObject("entities"); //getting inside "entities" in json
@@ -126,7 +128,7 @@ public class ExportData {
                     //System.out.println("9) Expanded URL: "+expanded_url[i]);
                 }
             }
-
+            
             //------- CHECK IF RETWEETED -------
             if (jobj.has("retweeted_status")) {
                 retweeted += 1;
@@ -149,7 +151,7 @@ public class ExportData {
             if (!flag) {
                 //System.out.println("Kainourios xrhsths");
                 tweet_user = new FollowedUserDetails(userID, followers, followees, account_age);
-                tweet_user.setNOTweets(tweets);
+                tweet_user.setNOTweets(1);
                 if (retweeted != 0) {
                     tweet_user.increaseNORetweets();
                 } else {
@@ -172,7 +174,7 @@ public class ExportData {
 
             } else {
                 //System.out.println("Yparxei o xrhsths");
-                followedUsers.get(pos).setNOTweets(tweets);
+                followedUsers.get(pos).increaseNOTweets(1);
                 if (retweeted != 0) {
                     followedUsers.get(pos).increaseNORetweets();
                 } else {
@@ -198,22 +200,14 @@ public class ExportData {
         int i=1;
         System.out.println("*** Sinolikoi xristes: " + followedUsers.size() + " ***");
         for (FollowedUserDetails user : followedUsers) {
-            System.out.println("======== Teliki epeksergasia xristi " + i);
             user.calculateAvegHashtagsPerTweet();
-            //.out.println("Telos average hashtags per tweet");
             user.calculateAvegRetweetPerTweet();
-            //System.out.println("Telos average retweet per tweet");
             user.calculatePercentageOfTweetsWithHashtag();
-            //System.out.println("Telos percentage of tweets with hshtags");
             user.calculatePercentageOfTweetsWithURL();
-            //System.out.println("Telos percentage of tweets with url");
             user.calculateURLsRatio();
-            //System.out.println("Telos URLs ratio");
             user.calculateMostFrequentSource();
-            //System.out.println("Telos most frequent source");
+            user.calculateUniqueDomains();
             user.calculateCopies();
-            //System.out.println("telos calculate copies");
-            System.out.println("Copies: " + user.getCopiedTweets());
             i++;
         }
 

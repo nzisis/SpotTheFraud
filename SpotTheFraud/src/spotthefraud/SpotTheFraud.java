@@ -1,5 +1,6 @@
 package spotthefraud;
 
+import java.net.URISyntaxException;
 import twitter4j.JSONException;
 
 /**
@@ -22,12 +23,14 @@ public class SpotTheFraud {
      * project.
      *
      * @param args the command line arguments
+     * @throws twitter4j.JSONException
+     * @throws java.net.URISyntaxException
      */
-    public static void main(String[] args) throws JSONException {
+    public static void main(String[] args) throws JSONException, URISyntaxException {
 
         //TweetsControl a=new TweetsControl();
         //TweetsAnalyzer analyzer = new TweetsAnalyzer();
-        ExportData d = new ExportData();
+        //ExportData d = new ExportData();
 
     }
 

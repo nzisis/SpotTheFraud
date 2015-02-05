@@ -80,7 +80,7 @@ public class TweetsControl {
                 String json = DataObjectFactory.getRawJSON(status);
                 DBObject jsonObj = (DBObject) JSON.parse(json);
                 tweetColl.insert(jsonObj);
-                if (topTopicThread.getState() != State.TIMED_WAITING) {
+                if (topTopicThread.getState() != State.TIMED_WAITING) { //ginete alithes otan ksekinaei i ananewsi threads //trexoun akoma i ananewsi twn trends
                     System.out.println("Stop gathering status");
                     synchronized (lock) {
                         try {
@@ -290,7 +290,7 @@ public class TweetsControl {
     public void initializeThreadsAndStartProcedure() {
 
         topTopicThread = new Thread(topTopicRunnable);
-
+        //ksekinaei kai lockarete kateutheian
         topTopicThread.start();
         synchronized (lock) {
             try {

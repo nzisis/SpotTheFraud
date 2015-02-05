@@ -1,5 +1,8 @@
 package spotthefraud;
 
+import static java.lang.String.format;
+import static java.lang.String.format;
+import static java.lang.String.format;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -7,13 +10,14 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * It's a basic representation of a Twitter user. It stores the basic of a user
- * and class FollowedUserDetails is its extention.
- * It actually store data asked in 4th-A part of project.
+ * and class FollowedUserDetails is its extention. It actually store data asked
+ * in 4th-A part of project.
  *
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */
@@ -24,6 +28,7 @@ public class User {
     private int followees;
     private double ratio; //followers/followees
     private String accountAge;
+    private Long age;
 
     public User() {
         userID = "";
@@ -42,13 +47,8 @@ public class User {
         this.followers = followers;
         this.followees = followees;
         this.accountAge = accountAge;
-<<<<<<< HEAD
-        //setAccountAge(accountAge);
+        this.age = setAccountAge(accountAge);
         ratio = (double) followers / followees;
-=======
-        setAccountAge(accountAge);
-        ratio = (double) followers/followees;
->>>>>>> origin/master
     }
 
     public int getFollowers() {
@@ -76,64 +76,52 @@ public class User {
     }
 
     public double getRatio() {
-        ratio = (double) followers / followees;
+        if (followees != 0) {
+            ratio = (double) followers / followees;
+        } else {
+            ratio = 0;
+        }
         return ratio;
+
     }
 
     public String getAccountAge() {
         return accountAge;
     }
 
-    public void setAccountAge(String createdAge) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        setAccountAge(createdAge, dateFormat.format(date).toString());
+    public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
+        long diffInMillies = date2.getTime() - date1.getTime();
+        return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
     }
 
-    public void setAccountAge(String createdAge, String currentDate) {
-<<<<<<< HEAD
-        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    public Long setAccountAge(String createdAge) {
 
-=======
-        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
-        
->>>>>>> origin/master
-        Date d1, d2;
         try {
-            d1 = format.parse(createdAge);
-            d2 = format.parse(currentDate);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy", Locale.ENGLISH);
+            Date accountCreationTime = dateFormat.parse(createdAge);
+            Date currentTime = new Date();
+            dateFormat.format(currentTime);
+            
+            return getDateDiff(accountCreationTime, currentTime, TimeUnit.DAYS);
 
-            long diff = d2.getTime() - d1.getTime();
-
-            long diffSeconds = diff / 1000 % 60;
-            long diffMinutes = diff / (60 * 1000) % 60;
-            long diffHours = diff / (60 * 60 * 1000) % 24;
-            long diffDays = diff / (24 * 60 * 60 * 1000);
-
-            StringBuilder sb = new StringBuilder();
-            sb.append(diffDays).append("days, ").append(diffHours).append("hours, ").append(diffMinutes).append("minutes, ").append(diffSeconds).append("seconds.");
-
-            this.accountAge = sb.toString();
         } catch (ParseException ex) {
             Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return null;
     }
 
-<<<<<<< HEAD
     public void print() {
-=======
-    public void print(){
->>>>>>> origin/master
-        NumberFormat nf = NumberFormat.getPercentInstance();
-        nf.setMaximumFractionDigits(2);
-        nf.setMinimumFractionDigits(2);
-        nf.setRoundingMode(RoundingMode.HALF_UP);
+        //NumberFormat nf = NumberFormat.getPercentInstance();
+        //nf.setMaximumFractionDigits(2);
+        //nf.setMinimumFractionDigits(2);
+        //nf.setRoundingMode(RoundingMode.HALF_UP);
 
         System.out.println("-------------");
         System.out.println("User ID: " + this.userID);
         System.out.println("Followers: " + this.followers);
         System.out.println("Followees: " + this.followees);
-        System.out.println("Ratio: " + nf.format(this.ratio));
-        System.out.println("Acount Age: " + this.accountAge);
+        System.out.println("Ratio: " + this.ratio);
+        //System.out.println("Ratio: " + nf.format(this.ratio));
+        System.out.println("Acount Age: " + this.age + " days");
     }
 }
