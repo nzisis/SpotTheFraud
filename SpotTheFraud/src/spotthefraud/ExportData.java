@@ -46,6 +46,7 @@ public class ExportData {
     public ExportData() throws JSONException, URISyntaxException {
         initBasicVariables();
         exportA();
+        export();
     }
 
     private void initBasicVariables() {
