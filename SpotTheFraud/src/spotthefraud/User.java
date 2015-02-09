@@ -1,5 +1,9 @@
 package spotthefraud;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import static java.lang.String.format;
 import static java.lang.String.format;
 import static java.lang.String.format;
@@ -10,6 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,8 +90,8 @@ public class User {
 
     }
 
-    public String getAccountAge() {
-        return accountAge;
+    public Long getAccountAge() {
+        return age;
     }
 
     public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
@@ -111,17 +116,48 @@ public class User {
     }
 
     public void print() {
-        //NumberFormat nf = NumberFormat.getPercentInstance();
-        //nf.setMaximumFractionDigits(2);
-        //nf.setMinimumFractionDigits(2);
-        //nf.setRoundingMode(RoundingMode.HALF_UP);
 
-        System.out.println("-------------");
-        System.out.println("User ID: " + this.userID);
-        System.out.println("Followers: " + this.followers);
-        System.out.println("Followees: " + this.followees);
-        System.out.println("Ratio: " + this.ratio);
-        //System.out.println("Ratio: " + nf.format(this.ratio));
-        System.out.println("Acount Age: " + this.age + " days");
+            NumberFormat nf = NumberFormat.getPercentInstance();
+            nf.setMaximumFractionDigits(2);
+            nf.setMinimumFractionDigits(2);
+            nf.setRoundingMode(RoundingMode.HALF_UP);
+            
+            
+            System.out.println(this.userID + "\t" + this.followers + "\t" + this.followees + "\t" + nf.format(this.ratio) + "\t" + this.age );
+            /*
+            
+            System.out.println("-------------");
+            System.out.println("User ID: " + this.userID);
+            System.out.println("Followers: " + this.followers);
+            System.out.println("Followees: " + this.followees);
+            System.out.println("Ratio: " + this.ratio);
+            //System.out.println("Ratio: " + nf.format(this.ratio));
+            System.out.println("Acount Age: " + this.age + " days"); */
+
+    }
+    
+    /**
+     * used for write the data for 4th partA for all users
+     */
+    public void writeToFile() {
+        
+        try {
+            Scanner s = new Scanner(new File("allNumbers.txt"));
+            int[] array = new int[2054836];
+            int temp=1;
+            int count=1;
+            for (int i = 0; i < array.length; i++){
+                array[i] = s.nextInt();
+                if(array[i]==temp){
+                    count++;
+                } else{
+                    System.out.println(temp + " " + count);
+                    temp = array[i];
+                    count=1;
+                }
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(SpotTheFraud.class.getName()).log(Level.SEVERE, null, ex);
+        } 
     }
 }

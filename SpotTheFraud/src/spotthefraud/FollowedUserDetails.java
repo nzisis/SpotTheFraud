@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package spotthefraud;
 
 import java.math.RoundingMode;
@@ -49,6 +44,7 @@ public class FollowedUserDetails extends User {
     private HashSet<String> uniqueDomains;
     private int numberOfUniqueDomains;//facebook.com, twitter.com, youtube.com....
     private HashSet<String> uniqueURLs;
+    private double domainRatio;
 
     public FollowedUserDetails(String id) {
         super(id);
@@ -82,6 +78,7 @@ public class FollowedUserDetails extends User {
         urlRatio = 0;
         tweets = new ArrayList<>();
         copiedTweets = 0;
+        domainRatio=0;
     }
 
     public void setNOTweets(int noTweets) {
@@ -190,6 +187,8 @@ public class FollowedUserDetails extends User {
     public void calculateURLsRatio() {
         if (noURL != 0) {
             urlRatio = (double) uniqueURLs.size() / noURL;
+        } else {
+            urlRatio = 0;
         }
     }
 
@@ -222,6 +221,11 @@ public class FollowedUserDetails extends User {
             uniqueDomains.add(getDomainName(url));
         }
         numberOfUniqueDomains = uniqueDomains.size();
+        if (noURL != 0) {
+            domainRatio = (double) numberOfUniqueDomains / noURL;
+        } else {
+            domainRatio = 0;
+        }
     }
 
     public static String getDomainName(String url) throws URISyntaxException {
@@ -361,5 +365,7 @@ public class FollowedUserDetails extends User {
         System.out.println("Number of URLs: " + this.noURL);
         System.out.println("URL Ratio: " + this.urlRatio);
         System.out.println("Unique Domains: " + this.numberOfUniqueDomains);
+        System.out.println("Number of Domains: " + this.noURL);
+        System.out.println("Domain Ratio: " + this.domainRatio);
     }
 }

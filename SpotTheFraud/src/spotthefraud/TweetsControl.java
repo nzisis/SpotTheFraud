@@ -28,7 +28,8 @@ import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.json.DataObjectFactory;
 
 /**
- * 
+ * It crawls the top trending topics from REST API and parallel collect
+ * tweets from Streaming API that are concerning the trending topics.
  * 
  * @authors Nikos Zissis, Sokratis Papadopoulos, George Mihailidis, Anastasios Kostas
  */

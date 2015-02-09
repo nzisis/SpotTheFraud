@@ -27,11 +27,11 @@ public class SpotTheFraud {
      * @throws java.net.URISyntaxException
      */
     public static void main(String[] args) throws JSONException, URISyntaxException {
-
-        //TweetsControl a=new TweetsControl();
-        //TweetsAnalyzer analyzer = new TweetsAnalyzer();
-        //ExportData d = new ExportData();
-
+        
+        //TweetsControl crawl=new TweetsControl();
+        
+        //TweetsAnalyzer analyzeData = new TweetsAnalyzer();
+        
+        //ExportData exportStatistics = new ExportData();
     }
-
 }

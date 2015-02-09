@@ -1,6 +1,5 @@
 package spotthefraud;
 
-import java.util.Comparator;
 import java.util.HashSet;
 
 /**

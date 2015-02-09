@@ -5,9 +5,15 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.math.RoundingMode;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import twitter4j.JSONArray;
@@ -28,15 +34,18 @@ public class ExportData {
     //basic variables for Mongo & Twitter API
 
     private MongoClient client;
-    private DB FollowedUsers;
-    private DBCollection followedColl;
+    private DB FollowedUsers, TweetDb;
+    private DBCollection followedColl, tweetColl;
     private ConfigurationBuilder cb;
 
     private ArrayList<FollowedUserDetails> followedUsers; //creates the arraylist of final data of followed users
-
+    private ArrayList<User> tweetUsers;
+    private HashMap<String, Integer> uniqueIds;
+    
+    
     public ExportData() throws JSONException, URISyntaxException {
         initBasicVariables();
-        export();
+        exportA();
     }
 
     private void initBasicVariables() {
@@ -49,15 +58,79 @@ public class ExportData {
 
         try {
             client = new MongoClient("localhost", 27017);
+           
+            TweetDb = client.getDB("Tweets");
+            tweetColl = TweetDb.createCollection("tweetsColl", null);
+            
             FollowedUsers = client.getDB("Followed");
             followedColl = FollowedUsers.createCollection("followedColl", null);
+            
         } catch (UnknownHostException ex) {
             Logger.getLogger(TweetsControl.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
+        tweetUsers = new ArrayList<>();
+        uniqueIds = new HashMap<>();
         followedUsers = new ArrayList<>();
     }
+    
+    /**
+     * used to export data for partA for all users.
+     * @throws JSONException
+     * @throws URISyntaxException 
+     */
+    public void exportA() throws JSONException, URISyntaxException {
+        
+        try {
+            DBCursor cursor = tweetColl.find(); //get a cursor that will run throughout the collection.
+            int pos=0;
+            while (cursor.hasNext()) { //for each tweet in the collection
+                DBObject obj = cursor.next(); //stores the tweet data into obj
+                
+                JSONObject jobj = new JSONObject(obj.toString());
+                String userID = jobj.getJSONObject("user").getString("id_str"); //gets the ID of user
+                //System.out.println("1) userID: "+userID);
+                int followers = jobj.getJSONObject("user").getInt("followers_count");
+                //System.out.println("Followers: " + followers);
+                int followees = jobj.getJSONObject("user").getInt("friends_count");
+                //System.out.println("Followees: " + followees);
+                String account_age = jobj.getJSONObject("user").getString("created_at");
+                //System.out.println("Account age: "+ account_age);
+                
+                if (!uniqueIds.containsKey(userID)) { //if user exists already in our ArrayList statistics
+                    uniqueIds.put(userID, pos);
+                    pos++;
+                    tweetUsers.add(new User(userID, followers, followees, account_age));
+                }
+                
+            }
+            NumberFormat nf = NumberFormat.getPercentInstance();
+            nf.setMaximumFractionDigits(2);
+            nf.setMinimumFractionDigits(2);
+            nf.setRoundingMode(RoundingMode.HALF_UP);
+            
+            System.out.println("!!!!!!!!!!!! FINAL RESULTS !!!!!!!!!!!!");
+            System.out.println("Total of unique users: " + tweetUsers.size());
+            
+            PrintWriter writer = null;
+            writer = new PrintWriter("epipedoA-all.txt", "UTF-8");
+            for (User user : tweetUsers) {
+            writer.println(user.getUserID() + "\t" + user.getFollowers() + "\t" + user.getFollowees() + "\t" + nf.format(user.getRatio()) + "\t \t" + user.getAccountAge());
+            }
+            writer.close();
 
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ExportData.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(ExportData.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * exports all data that are asked in partB for 40 users that we followed
+     * @throws JSONException
+     * @throws URISyntaxException 
+     */
     public void export() throws JSONException, URISyntaxException {
 
         DBCursor cursor = followedColl.find(); //get a cursor that will run throughout the collection.
